@@ -3,7 +3,8 @@
 s1.yaml
 
 # 工具目录
-.playwright/
+.playwright/*
+!.playwright/cli.config.json
 .playwright-cli/
 .workbuddy/
 *.genie
