@@ -22,11 +22,25 @@ if ! curl -s -o /dev/null "$URL"; then
   trap '[ -n "$SERVER_PID" ] && kill $SERVER_PID 2>/dev/null' EXIT
 fi
 
-# 3. JS 语法检查
-for f in vendor/qrcode.js data.js app.js; do
+# 3. JS 语法检查，并确认 index.html 按依赖顺序引用（与 README 的脚本清单一致）
+JS_FILES="vendor/qrcode.js data.js js/state.js js/layouts.js js/score.js js/card.js js/share.js js/result.js js/surname.js js/quiz.js js/boot.js"
+for f in $JS_FILES; do
+  [ -f "$f" ] || fail "缺少 $f"
   node --check "$f" && echo "✓ 语法 OK: $f" || fail "语法错误: $f"
 done
-grep -q 'src="data.js"' index.html || fail "index.html 未引用 data.js"
+html=$(cat index.html)
+offset=0
+for f in $JS_FILES; do
+  needle="src=\"$f\""
+  tail="${html:offset}"
+  case "$tail" in
+    *"$needle"*) ;;
+    *) fail "index.html 未按顺序引用 $f" ;;
+  esac
+  prefix="${tail%%"$needle"*}"
+  offset=$((offset + ${#prefix} + ${#needle}))
+done
+echo "✓ index.html 脚本顺序 OK"
 
 # 4. 浏览器全流程验证
 "$PC" close >/dev/null 2>&1 || true

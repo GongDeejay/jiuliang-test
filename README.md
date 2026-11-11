@@ -7,15 +7,25 @@
 ## 项目结构
 
 ```
-index.html           # 页面骨架（部署入口，引用下方资源）
+index.html           # 页面骨架（部署入口，按依赖顺序引用下方脚本）
 style.css            # 全部样式（贴纸风、动画、响应式）
 data.js              # 题库与文案：8 题选项/吐槽、33 省品牌数据、42 条评语、绰号模板
-app.js               # 全部逻辑：渲染、计分、揭晓动画、canvas 出图、分享
+js/state.js          # 屏幕切换、答题状态、进度点、轻提示
+js/layouts.js        # 八种题型的 HTML 版面
+js/quiz.js           # 出题、点选、反馈、推进到下一题或计分
+js/score.js          # 计分、酒量档位、绰号候选
+js/surname.js        # 贵姓页与绰号揭晓动画
+js/result.js         # 结算页
+js/card.js           # canvas 结果图
+js/share.js          # 保存、分享、长按浮层、复制文案
+js/boot.js           # 绑定「开始」
 vendor/qrcode.js     # 二维码生成库（MIT，本地内联，无外部请求）
 scripts/verify.sh    # 自动化全流程验证脚本（见下）
 ```
 
-改文案/题目/品牌数据只动 `data.js`；改样式动 `style.css`；改交互逻辑动 `app.js`。
+改文案/题目/品牌数据只动 `data.js`；改样式动 `style.css`；改交互时按上表进对应的 `js/` 文件。
+
+`js/*.js` 与 `data.js` 一样是无打包的经典脚本，共用页面上的全局绑定（`state`、`idx`、`locked`、`R`，以及 `$`、`show`、`render` 等函数）。`index.html` 里的 `<script>` 顺序就是依赖顺序：`state.js` 先声明状态，`boot.js` 最后绑定「开始」。不要改成 `type="module"`，也不要给单个文件再套一层 IIFE，否则跨文件的函数和状态会断开。
 
 ## 本地开发
 

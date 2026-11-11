@@ -33,7 +33,7 @@ const closed = await page.evaluate(() => !document.querySelector('.imgov'));
 **桌面非触屏分支**（不覆盖 maxTouchPoints）：点 `#save` 走 `a[download]`，断言按钮文本依次出现"正在生成…"→"已保存，去相册看看"；不出浮层是正常行为。
 
 ## Gotchas
-- **桌面 headless 必须覆盖 `maxTouchPoints` 才能驱动浮层分支**：`isTouch()` 判定 `ontouchstart in window || navigator.maxTouchPoints > 0`（app.js:802），默认桌面直接走下载分支，直接等 `.imgov-close` 会超时 30s（首跑实测踩过）。
+- **桌面 headless 必须覆盖 `maxTouchPoints` 才能驱动浮层分支**：`isTouch()` 在 `js/share.js`，判定 `ontouchstart in window || navigator.maxTouchPoints > 0`。默认桌面直接走下载分支，直接等 `.imgov-close` 会超时 30s（首跑实测踩过）。
 - **浮层必须用 data URL，禁止改回 blob:**：blob: 图片在 iOS 长按不弹保存菜单（用户实测反馈，产品核心路径）。
 - `navigator.share` 在 headless Chromium 永远挂起 → `shareWithFallback` 1.6s 兜底浮层是设计行为，勿把等待缩到 <1.6s（会误判）也勿删兜底。
 - 桌面/headless 验证时"下载文件"不产生可观察文件（headless 不落盘），证据以 `.imgov` 浮层 src 为准，不要因为没下载文件就判 ❌。

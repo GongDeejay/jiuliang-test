@@ -31,5 +31,5 @@ const gone = await page.evaluate(() => !document.getElementById('reveal'));
 
 ## Gotchas
 - **"绰号"泄漏检查是最容易被改坏的断言**：任何人在贵姓页加提示文案都可能写出"你的绰号是…"，verify.sh 有专门断言，❌ 就不能上线。
-- 绰号由"姓 × 酒量档位 × 酒风"计算（`app.js` nickList/LIANG 规则），同一份作答 + 同姓结果确定；`#reroll` 换一个属结算页功能，不在此页。
-- 若 `#reveal` 未出现：先查 `showName()`（app.js 约 20 行）是否被改动了移除浮层的逻辑。
+- 绰号由"姓 × 酒量档位 × 酒风"计算（`js/score.js` 的 `nickList`，量词表是 `data.js` 的 `LIANG`），同一份作答 + 同姓结果确定；`#reroll` 换一个属结算页功能，不在此页。
+- 若 `#reveal` 未出现：先查 `js/surname.js` 的 `showName()` / `revealNick()` 是否被改动了移除浮层的逻辑。

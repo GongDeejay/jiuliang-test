@@ -1,6 +1,6 @@
 ---
 name: verify-jiuliang
-description: 酒量绰号测试（jiuliang-test）的行为验证 skill。以用户视角驱动真实页面，跑通 启动页→八题作答→贵姓揭晓→结算页→保存分享 全流程并留存证据。改动 index.html / style.css / data.js / app.js 之后、上线发布之前必须使用；需要证明某个功能可用时也用它。
+description: 酒量绰号测试（jiuliang-test）的行为验证 skill。以用户视角驱动真实页面，跑通 启动页→八题作答→贵姓揭晓→结算页→保存分享 全流程并留存证据。改动 index.html / style.css / data.js / js/*.js 之后、上线发布之前必须使用；需要证明某个功能可用时也用它。
 ---
 
 # verify-jiuliang
@@ -22,8 +22,8 @@ SERVER_PID=$!   # 记住这个 PID，cleanup 只杀它
 出任何异常先跑一次只读体检，判断"这个实例值不值得驱动"：
 
 1. `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8899/index.html` == `200`
-2. `node --check app.js && node --check data.js && node --check vendor/qrcode.js` 全部通过
-3. `index.html` 引用了 `data.js`、`app.js`、`vendor/qrcode.js`、`style.css`
+2. `node --check` 对下列脚本全部通过（与 `scripts/verify.sh` 的清单一致）：`vendor/qrcode.js`、`data.js`、`js/state.js`、`js/layouts.js`、`js/score.js`、`js/card.js`、`js/share.js`、`js/result.js`、`js/surname.js`、`js/quiz.js`、`js/boot.js`
+3. `index.html` 按上述顺序引用这些脚本（`data.js` 在全部 `js/` 之前，`js/boot.js` 最后），并引用 `style.css`。逻辑在 `js/` 下的经典脚本里，不是 ES module，也没有 `app.js`
 
 任何一条不过，修语法/文件引用，不要继续驱动。
 
