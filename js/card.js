@@ -7,7 +7,7 @@ var cardMode = "moments";
 /* 朋友圈二维码钉在这个盒子里，字数变了也不挪位置。 */
 var CARD_SPEC = {
   dpr: 2,
-  show: {w:750, h:1334},
+  show: {w:750, h:1334, qr:{x:56, y:1180, box:132}},
   moments: {
     w: 750,
     h: 1120,
@@ -18,9 +18,6 @@ var CARD_SPEC = {
 
 function markMode(mode){
   cardMode = mode === "show" ? "show" : "moments";
-  var p = $("pass"), m = $("moments");
-  if (p) p.classList.toggle("on", cardMode === "show");
-  if (m) m.classList.toggle("on", cardMode === "moments");
 }
 
 function rr(g, x, y, w, h, r){
@@ -179,7 +176,7 @@ function drawShowCard(){
   g.fillStyle = "#241C14";
   var nk = R.nick || (R.name + LIANG[R.band]);
   var chars = nk.split("");
-  var top = 190, bottom = 1120, avail = bottom - top;
+  var top = 190, bottom = 1030, avail = bottom - top;
   var size = Math.floor(avail / chars.length * 0.78);
   if (size > 240) size = 240;
   if (size < 64) size = 64;
@@ -190,18 +187,28 @@ function drawShowCard(){
   for (var i = 0; i < chars.length; i++) g.fillText(chars[i], W / 2, y + i * gap);
 
   /* 搞笑认证印章：斜盖在绰号右侧 */
-  drawStamp(g, 588, 430, (STAMP_WORDS[R.band] || "酒桌免检"));
-
-  /* 酒瓶数量刻度：7 档点亮 band+1 只 */
-  drawBottleRow(g, W / 2, H - 64, 56, Math.min(R.band + 1, 7));
+  drawStamp(g, 588, 400, (STAMP_WORDS[R.band] || "酒桌免检"));
 
   var short = pctClaim(R.pct, R.band, true);
   if (short){
     g.globalAlpha = 0.92;
     g.font = "800 34px " + FONT;
-    g.fillText(short, W / 2, H - 150);
+    g.fillText(short, W / 2, 1080);
     g.globalAlpha = 1;
   }
+
+  /* 酒瓶数量刻度：7 档点亮 band+1 只 */
+  drawBottleRow(g, W / 2, 1150, 52, Math.min(R.band + 1, 7));
+
+  /* 二维码：截图党也能扫进来 */
+  var qr = makeQr(resultUrl() || location.href.split("#")[0]);
+  paintQrBox(g, qr, CARD_SPEC.show.qr.x, CARD_SPEC.show.qr.y, CARD_SPEC.show.qr.box);
+  g.fillStyle = "#241C14";
+  g.font = "900 28px " + FONT;
+  g.fillText("扫码 · 测测你几两", 214, 1234);
+  g.fillStyle = "#7B6E5F";
+  g.font = "700 20px " + FONT;
+  g.fillText("结果仅供娱乐 · 切勿酒驾", 214, 1274);
   g.textAlign = "left";
   return box.cv;
 }

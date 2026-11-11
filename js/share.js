@@ -160,6 +160,7 @@ function saveImage(btn){
 
 function shareResult(btn){
   var text = shareSentence();
+  markMode("moments");   /* 分享固定走朋友圈版（带钩子与金句），不受出示层影响 */
   cardBlob().then(function(blob){
     if (isTouch()){
       if (canShareFiles(blob)){

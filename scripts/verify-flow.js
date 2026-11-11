@@ -71,6 +71,7 @@ async page => {
       liq: (function(){ var l = document.querySelector(".liq"); return l ? parseFloat(l.getAttribute("height")) : 0; })(),
       stk: document.querySelectorAll(".stk").length,
       cand: nickList(R.name).length,
+      btn3: !!document.getElementById("pass") && !document.getElementById("moments") && !document.getElementById("save"),
       band: R.band,
       n: R.pct,
       decoded: d && d.nick,
@@ -99,6 +100,8 @@ async page => {
   else ok("立绘✓ 酒瓶液位 " + Math.round(result.liq) + "✓ 贴纸 " + result.stk + " 枚✓ 候选 " + result.cand + " 个");
   if (result.decoded !== result.nick) bad("二维码短码解出的绰号对不上");
   else ok("短码对得上「" + result.decoded + "」");
+  if (!result.btn3) bad("结算页应只剩 官方认证/分享/再测一次 三个按钮");
+  else ok("按钮已归并：官方认证/分享/再测一次");
   await shot("result.png");
 
   await page.click("#reroll");
@@ -118,7 +121,7 @@ async page => {
   else ok("桌面分享已复制");
 
   await page.evaluate(() => Object.defineProperty(navigator, "maxTouchPoints", {configurable: true, get: () => 5}));
-  await page.click("#save");
+  await page.click("#share");
   await page.waitForTimeout(2200);
   const moments = await page.evaluate(() => {
     const img = document.querySelector(".imgov img");
@@ -150,15 +153,15 @@ async page => {
       dark: dark / n
     };
   });
-  if (!moments) bad("朋友圈保存浮层没出现");
-  else if (moments.src !== "data:image/png;" || moments.layout !== "moments") bad("朋友圈图不是 png");
+  if (!moments) bad("分享浮层没出现");
+  else if (moments.src !== "data:image/png;" || moments.layout !== "moments") bad("分享图不是 moments 版 png");
   else if (moments.w !== 1500 || moments.h !== 2240) bad("朋友圈图尺寸 " + moments.w + "x" + moments.h);
   else if (moments.color[0] !== 255 || moments.color[1] !== 107 || moments.color[2] !== 53) bad("酒风色块不是豪侠橙 " + moments.color.join(","));
   else if (!(moments.dark > 0.08 && moments.dark < 0.7)) bad("固定位置没有二维码");
   else if (moments.hook !== "这桌你先起身") bad("朋友圈钩子不对: " + moments.hook);
   else if (moments.hook.indexOf("断片") >= 0) bad("断片年纪默认上了桌");
   else if (moments.badge.indexOf("长按") < 0 || moments.hint.indexOf("按住") < 0) bad("浮层长按提示不明显");
-  else ok("朋友圈图 色块✓ 二维码✓ 钩子「" + moments.hook + "」");
+  else ok("分享图（朋友圈版） 色块✓ 二维码✓ 钩子「" + moments.hook + "」");
   await shot("moments-overlay.png");
 
   if (moments) {
@@ -182,21 +185,11 @@ async page => {
     await page.waitForTimeout(400);
   }
 
-  await page.click("#moments");
-  await page.waitForTimeout(2200);
-  const again = await page.evaluate(() => {
-    const img = document.querySelector(".imgov img");
-    return img ? {layout: img.getAttribute("data-layout"), src: img.src.slice(0, 15)} : null;
-  });
-  if (!again || again.layout !== "moments" || again.src !== "data:image/png;") bad("发朋友圈按钮没出图");
-  else ok("发朋友圈按钮出图");
-  await page.click(".imgov-close");
-  await page.waitForTimeout(400);
-
   await page.click("#pass");
   await page.waitForTimeout(300);
   const stage = await page.evaluate(() => {
     const span = document.querySelector("#showNick span");
+    const qr = document.querySelector("#showQrImg");
     return {
       on: document.getElementById("showstage").classList.contains("on"),
       nick: document.getElementById("showNick").textContent,
@@ -207,7 +200,8 @@ async page => {
       size: span ? parseFloat(getComputedStyle(span).fontSize) : 0,
       brandGone: !document.querySelector(".show-brand"),
       stamp: (document.getElementById("showStamp") || {}).textContent || "",
-      bottles: !!document.querySelector("#showBottles .brow")
+      bottles: !!document.querySelector("#showBottles .brow"),
+      qr: !!(qr && qr.src && qr.src.length > 10)
     };
   });
   if (!stage.on || stage.nick !== rolled.nick) bad("出示层绰号不对");
@@ -216,8 +210,9 @@ async page => {
   else if (!stage.brandGone) bad("出示层「你，几两？」未去掉");
   else if (stage.stamp.indexOf("斤免检") < 0 && stage.stamp.indexOf("认证") < 0 && stage.stamp.indexOf("报到") < 0) bad("出示印章缺失: " + stage.stamp);
   else if (!stage.bottles) bad("出示酒瓶刻度缺失");
+  else if (!stage.qr) bad("出示层二维码缺失");
   else if (stage.tag !== "豪侠" || stage.tagBg.indexOf("255, 107, 53") < 0 && stage.tagBg.indexOf("255,107,53") < 0) bad("出示酒风签不对: " + stage.tag + " " + stage.tagBg);
-  else ok("出示「" + stage.nick + "」 " + stage.size + "px 章「" + stage.stamp.replace(/\s/g, "") + "」瓶✓");
+  else ok("出示「" + stage.nick + "」 " + stage.size + "px 章「" + stage.stamp.replace(/\s/g, "") + "」瓶✓ 二维码✓");
   await shot("show-stage.png");
 
   await page.click("#showSave");
@@ -232,20 +227,29 @@ async page => {
     g.drawImage(img, 0, 0);
     const p = g.getImageData(16, 16, 1, 1).data;      /* 顶边酒风色条 */
     const body = g.getImageData(16, 200, 1, 1).data;  /* 顶条下方奶黄底 */
+    const sq = CARD_SPEC.show.qr;
+    const qd = g.getImageData(sq.x * 2, sq.y * 2, sq.box * 2, sq.box * 2).data;
+    let dark = 0, n = 0;
+    for (let i = 0; i < qd.length; i += 16) {
+      n++;
+      if (qd[i] < 60 && qd[i + 1] < 60 && qd[i + 2] < 60) dark++;
+    }
     return {
       w: img.naturalWidth,
       h: img.naturalHeight,
       layout: img.getAttribute("data-layout"),
       src: img.src.slice(0, 15),
       color: [p[0], p[1], p[2]],
-      body: [body[0], body[1], body[2]]
+      body: [body[0], body[1], body[2]],
+      qrdark: dark / n
     };
   });
   if (!showImg || showImg.layout !== "show" || showImg.src !== "data:image/png;") bad("出示图没生成");
   else if (showImg.w !== 1500 || showImg.h !== 2668) bad("出示图尺寸 " + showImg.w + "x" + showImg.h);
   else if (showImg.color.join(",") !== "255,107,53") bad("出示顶边不是酒风色: " + showImg.color.join(","));
   else if (showImg.body.join(",") !== "255,247,227") bad("出示底不是奶黄底: " + showImg.body.join(","));
-  else ok("出示图 奶黄底✓ 顶边酒风色✓");
+  else if (!(showImg.qrdark > 0.08 && showImg.qrdark < 0.7)) bad("出示图固定位置没有二维码");
+  else ok("出示图 奶黄底✓ 顶边酒风色✓ 二维码✓");
   await page.click(".imgov-close");
   await page.waitForTimeout(300);
   await page.click("#showClose");

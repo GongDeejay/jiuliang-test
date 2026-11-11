@@ -9,6 +9,7 @@
 - 网址二维码：`#qimg`。`data-url` 与图里编码的是同一条 `resultUrl()`：没有门禁码时结果在 `sharecode`，已有解不开的 `sharecode`（线上 `W4XEIG3UOR`）时原样保留、结果在 `from`
 - 若是从别人的酒牌进来的，`#vs` / `#vsLine` 并排两个绰号和一句桌边话。这一屏可以高出 667，冷启动结算页不行
 - 结算页文案硬要求：不出现"酒桌人格测试"措辞，只叫"酒桌绰号"
+- 按钮区 v5（2026-11-11 归并，用户嫌四个按钮功能重复）：只有三个 —— `#pass`「官方认证」（主按钮，`.modes.single` 全宽，开 `#showstage`）+ `.row2` 里 `#share`「分享」和 `#again`「再测一次」。**`#moments` 和 `#save` 按钮已删**，`markMode` 只改 `cardMode` 不再碰 DOM。分享固定走朋友圈版卡片（share.js `shareResult` 开头 `markMode("moments")`），出示版只从 `#showstage` 的 `#showSave` 出。断言：`#pass` 存在且 `#moments`/`#save` 不存在
 
 ## How to get to it (user POV)
 绰号揭晓动画结束后自动进入 `#s-result`。

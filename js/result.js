@@ -74,8 +74,8 @@ function fillShowNick(el, nick){
   el.innerHTML = "";
   var n = nick.length;
   var vh = window.innerHeight || 667;
-  var size = Math.floor((vh - 230) / n * 0.9);
-  if (size > 168) size = 168;
+  var size = Math.floor((vh - 320) / n * 0.9);
+  if (size > 158) size = 158;
   if (size < 42) size = 42;
   for (var i = 0; i < n; i++){
     var s = document.createElement("span");
@@ -83,6 +83,18 @@ function fillShowNick(el, nick){
     s.style.fontSize = size + "px";
     el.appendChild(s);
   }
+}
+
+/* 出示层二维码：截图党也能扫进来 */
+function paintShowQr(){
+  var img = $("showQrImg");
+  if (!img) return;
+  try {
+    var qr = qrcode(0, "M");
+    qr.addData(resultUrl() || location.href.split("#")[0]);
+    qr.make();
+    img.src = qr.createDataURL(4, 2);
+  } catch (e) { img.parentNode.style.display = "none"; }
 }
 
 function closeShowStage(){
@@ -104,6 +116,10 @@ function openShowStage(){
       '<div class="show-stamp" id="showStamp"></div>' +
       '<div class="show-bottles" id="showBottles"></div>' +
       '<p class="show-pct" id="showPct"></p>' +
+      '<div class="show-qr" id="showQr">' +
+        '<img id="showQrImg" alt="扫码测一测">' +
+        '<b>扫码 · 测测你几两</b>' +
+      '</div>' +
       '<div class="show-bar">' +
         '<button type="button" class="btn" id="showSave">保存出示图</button>' +
         '<button type="button" class="btn ghost" id="showClose">收起</button>' +
@@ -127,9 +143,9 @@ function openShowStage(){
   var stamp = $("showStamp");
   var sw = (STAMP_WORDS[R.band] || "酒桌免检");
   stamp.innerHTML = "<i>" + sw.slice(0, 2) + "<br>" + sw.slice(2) + "</i>";
-  stamp.style.display = "block";
   var sbot = $("showBottles");
   sbot.innerHTML = bottleRowSvg(R.band, 22);
+  paintShowQr();
   var short = pctClaim(R.pct, R.band, true);
   var pct = $("showPct");
   pct.textContent = short;
@@ -197,12 +213,10 @@ function renderResult(delay){
         (R.know === 2 ? '<span class="stk stk-gold">全场最懂</span>' : '') +
       '</div>' +
     '</div>' +
-    '<div class="modes">' +
-      '<button type="button" class="mode" id="pass">出示同桌</button>' +
-      '<button type="button" class="mode on" id="moments">发朋友圈</button>' +
+    '<div class="modes single">' +
+      '<button type="button" class="mode" id="pass">官方认证</button>' +
     '</div>' +
-    '<div class="row3">' +
-      '<button class="btn ghost" id="save" type="button">保存图片</button>' +
+    '<div class="row2">' +
       '<button class="btn ghost" id="share" type="button">分享</button>' +
       '<button class="btn ghost" id="again" type="button">再测一次</button>' +
     '</div>' +
@@ -241,10 +255,5 @@ function renderResult(delay){
     else show(sIntro);
   });
   $("pass").addEventListener("click", function(){ openShowStage(); });
-  $("moments").addEventListener("click", function(){
-    markMode("moments");
-    saveImage(this);
-  });
-  $("save").addEventListener("click", function(){ saveImage(this); });
   $("share").addEventListener("click", function(){ shareResult(this); });
 }
