@@ -87,6 +87,21 @@
         '<path d="M61 20 v6" stroke-width="2"/>' +
         '<path d="M58 26 q3 -4 6 0 v7 l-6 0 z" fill="#FFD9C7" stroke-width="2.2"/>' +
       '</g></svg>',
+    /* 工作后：领带、公文包、应酬举杯 */
+    '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<path d="M31 17 q11 -9 22 0"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 24 q-13 4 -26 0 z" fill="#FFFFFF"/>' +
+        '<path d="M42 32 l-3.5 6 l3.5 10 l3.5 -10 z" fill="#FF6B35" stroke-width="2"/>' +
+        '<path d="M53 37 l10 8"/>' +
+        '<rect x="59" y="38" width="11" height="13" rx="2" fill="#FFD9C7" stroke-width="2.2"/>' +
+        '<path d="M31 37 l-9 6"/>' +
+        '<rect x="16" y="46" width="13" height="16" rx="2.5" fill="#8A6B4F" stroke-width="2.2"/>' +
+        '<path d="M20.5 46 v-3 q0 -2 2 -2 q2 0 2 2 v3" stroke-width="2"/>' +
+        '<path d="M38 58 l-3 19 M46 58 l3 19"/>' +
+        '<path d="M35 78 h-6 M49 78 h6"/>' +
+      '</g></svg>',
     /* 现在：衬衫、保温杯 */
     '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
       '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
@@ -132,6 +147,7 @@
         {v:"初中", age:"13 岁前", d:"偷偷尝的第一口", t:"初中，甚至更早", cap:5,  st:{jianghu:2, hero:1}, sp:{fast:2}, r:"起点太早，这笔账身体记着。"},
         {v:"高中", age:"16 岁上下", d:"跟同学比胆量", t:"高中，偷偷喝的", cap:10, st:{hero:2}, sp:{fast:2}, r:"胆子比酒量大，这是实话。"},
         {v:"大学", age:"19 岁上下", d:"宿舍那晚", t:"大学，宿舍那晚", cap:13, st:{host:1, hero:1}, sp:{fast:1}, r:"青春的标准结局，懂的都懂。"},
+        {v:"工作后", age:"23 岁上下", d:"入职酒局练出来的", t:"工作后，酒局教的", cap:13, st:{host:1, jianghu:1}, sp:{steady:1}, r:"团建喝出来的量，账都记在公司头上。"},
         {v:"到现在", age:"还没断过", d:"纪录保持者", t:"从没断片过", cap:8,  st:{book:2, escape:1}, sp:{steady:1}, r:"从没断过，要么克制，要么没喝。"}
       ]
     },

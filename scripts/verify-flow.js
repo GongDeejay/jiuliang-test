@@ -24,11 +24,12 @@ async page => {
     const sw = await page.evaluate(() => document.documentElement.scrollWidth);
     const kindOk = await page.evaluate((k) => {
       const sels = {pmap:".pmap", vessels:".vessels", ages:".ages", table:".tbl-wrap", knock:".scene", digits:".digits", chat:".replies", battery:".gchat"};
+      if (k === "ages") return document.querySelectorAll("#opts .age").length === 5;
       return !!document.querySelector(sels[k]);
     }, kinds[i]);
     if (h > vh) bad("第" + (i + 1) + "题溢出: " + h);
     else if (sw > 375) bad("第" + (i + 1) + "题横向溢出: " + sw);
-    else if (!kindOk) bad("第" + (i + 1) + "题题型不符");
+    else if (!kindOk) bad(kinds[i] === "ages" ? "第3题应有5个年龄段" : "第" + (i + 1) + "题题型不符");
     else ok("第" + (i + 1) + "题 " + kinds[i] + " " + h + "px");
     await page.locator("#opts [data-i]").nth(picks[i]).click();
     await page.waitForTimeout(1250);
@@ -64,7 +65,7 @@ async page => {
       qr: document.getElementById("qimg").src.length > 10,
       pct: pct,
       share: document.getElementById("shareline").textContent,
-      hint: document.getElementById("savehint").textContent,
+      conv: (document.querySelector(".convline") || {}).textContent || "",
       band: R.band,
       n: R.pct,
       decoded: d && d.nick,
@@ -84,8 +85,8 @@ async page => {
   else ok("刻度「" + result.pct + "」");
   if (result.share !== "我是" + result.nick + "，你几两？") bad("分享句不对: " + result.share);
   else ok("分享句「" + result.share + "」");
-  if (result.hint.indexOf("长按") < 0) bad("保存提示不够显眼");
-  else ok("保存长按提示");
+  if (result.conv.indexOf("折算") < 0 || result.conv.indexOf("瓶啤酒") < 0) bad("折算行缺失: " + result.conv);
+  else ok("折算行「" + result.conv + "」");
   if (result.decoded !== result.nick) bad("二维码短码解出的绰号对不上");
   else ok("短码对得上「" + result.decoded + "」");
   await shot("result.png");
@@ -190,6 +191,8 @@ async page => {
       on: document.getElementById("showstage").classList.contains("on"),
       nick: document.getElementById("showNick").textContent,
       pct: document.getElementById("showPct").textContent,
+      tag: (document.getElementById("showTag") || {}).textContent || "",
+      tagBg: (document.getElementById("showTag") || {}).style ? document.getElementById("showTag").style.background : "",
       expect: pctClaim(R.pct, R.band, true),
       size: span ? parseFloat(getComputedStyle(span).fontSize) : 0
     };
@@ -197,7 +200,8 @@ async page => {
   if (!stage.on || stage.nick !== rolled.nick) bad("出示层绰号不对");
   else if (stage.size < 72) bad("出示字不够大 " + stage.size);
   else if (stage.pct !== stage.expect) bad("出示刻度「" + stage.pct + "」");
-  else ok("出示「" + stage.nick + "」 " + stage.size + "px");
+  else if (stage.tag !== "豪侠" || stage.tagBg.indexOf("255, 107, 53") < 0 && stage.tagBg.indexOf("255,107,53") < 0) bad("出示酒风签不对: " + stage.tag + " " + stage.tagBg);
+  else ok("出示「" + stage.nick + "」 " + stage.size + "px 签「豪侠」");
   await shot("show-stage.png");
 
   await page.click("#showSave");
@@ -210,19 +214,22 @@ async page => {
     c.height = img.naturalHeight;
     const g = c.getContext("2d", {willReadFrequently: true});
     g.drawImage(img, 0, 0);
-    const p = g.getImageData(16, 16, 1, 1).data;
+    const p = g.getImageData(16, 16, 1, 1).data;      /* 顶边酒风色条 */
+    const body = g.getImageData(16, 200, 1, 1).data;  /* 顶条下方奶黄底 */
     return {
       w: img.naturalWidth,
       h: img.naturalHeight,
       layout: img.getAttribute("data-layout"),
       src: img.src.slice(0, 15),
-      color: [p[0], p[1], p[2]]
+      color: [p[0], p[1], p[2]],
+      body: [body[0], body[1], body[2]]
     };
   });
   if (!showImg || showImg.layout !== "show" || showImg.src !== "data:image/png;") bad("出示图没生成");
   else if (showImg.w !== 1500 || showImg.h !== 2668) bad("出示图尺寸 " + showImg.w + "x" + showImg.h);
-  else if (showImg.color.join(",") !== "255,107,53") bad("出示底色不对");
-  else ok("出示图铺满酒风色");
+  else if (showImg.color.join(",") !== "255,107,53") bad("出示顶边不是酒风色: " + showImg.color.join(","));
+  else if (showImg.body.join(",") !== "255,247,227") bad("出示底不是奶黄底: " + showImg.body.join(","));
+  else ok("出示图 奶黄底✓ 顶边酒风色✓");
   await page.click(".imgov-close");
   await page.waitForTimeout(300);
   await page.click("#showClose");

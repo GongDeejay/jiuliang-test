@@ -111,7 +111,7 @@ function provinceLine(i){
 /* 断片年纪默认不上桌。其余挑一句跟酒风最贴的。 */
 function ageHook(picks){
   if (!picks || picks.length < 3) return null;
-  var text = ["第一次断片在初中", "第一次断片在高中", "第一次断片在大学", "到现在还没断片"][picks[2]];
+  var text = ["第一次断片在初中", "第一次断片在高中", "第一次断片在大学", "第一次断片在工作后", "到现在还没断片"][picks[2]];
   return text ? {text: text, sensitive: true} : null;
 }
 
@@ -147,25 +147,35 @@ function newCanvas(w, h){
   return {cv: cv, g: g};
 }
 
-/* 出示版：绰号竖排铺满，截图也能一眼读完。最低档不写百分比。 */
+/* 出示版：奶黄底、墨字，酒风只做一枚色签和一条顶边——递到桌上更好读。最低档不写百分比。 */
 function drawShowCard(){
   var W = CARD_SPEC.show.w, H = CARD_SPEC.show.h;
   var box = newCanvas(W, H);
   var g = box.g;
   var face = styleFace();
-  g.fillStyle = face.bg;
+  g.fillStyle = "#FFF7E3";
   g.fillRect(0, 0, W, H);
+  g.fillStyle = face.bg;                      /* 酒风色只留一条顶边提气 */
+  g.fillRect(0, 0, W, 26);
 
-  g.fillStyle = face.fg;
+  g.textAlign = "center";
+  g.fillStyle = "#241C14";
   g.globalAlpha = 0.9;
   g.font = "800 30px " + FONT;
-  g.textAlign = "center";
-  g.fillText("你，几两？", W / 2, 88);
+  g.fillText("你，几两？", W / 2, 104);
   g.globalAlpha = 1;
 
+  var st = STYLE_NAME[R.styleKey] || "";
+  g.font = "800 34px " + FONT;
+  var tw = g.measureText(st).width + 64;
+  sticker(g, W / 2 - tw / 2, 142, tw, 58, 29, face.bg);
+  g.fillStyle = face.fg;
+  g.fillText(st, W / 2, 142 + 41);
+
+  g.fillStyle = "#241C14";
   var nk = R.nick || (R.name + LIANG[R.band]);
   var chars = nk.split("");
-  var top = 150, bottom = 1180, avail = bottom - top;
+  var top = 268, bottom = 1290, avail = bottom - top;
   var size = Math.floor(avail / chars.length * 0.78);
   if (size > 240) size = 240;
   if (size < 64) size = 64;
@@ -179,7 +189,7 @@ function drawShowCard(){
   if (short){
     g.globalAlpha = 0.92;
     g.font = "800 34px " + FONT;
-    g.fillText(short, W / 2, H - 72);
+    g.fillText(short, W / 2, H - 88);
     g.globalAlpha = 1;
   }
   g.textAlign = "left";

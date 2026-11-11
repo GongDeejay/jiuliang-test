@@ -77,6 +77,7 @@ function openShowStage(){
     stage.className = "showstage";
     stage.innerHTML =
       '<p class="show-brand">你，几两？</p>' +
+      '<p class="show-tag" id="showTag"></p>' +
       '<div class="show-nick" id="showNick"></div>' +
       '<p class="show-pct" id="showPct"></p>' +
       '<div class="show-bar">' +
@@ -92,8 +93,12 @@ function openShowStage(){
     });
   }
   var face = styleFace();
-  stage.style.background = face.bg;
-  stage.style.color = face.fg;
+  stage.style.background = "#FFF7E3";
+  stage.style.color = "#241C14";
+  var tag = $("showTag");
+  tag.textContent = STYLE_NAME[R.styleKey] || "";
+  tag.style.background = face.bg;
+  tag.style.color = face.fg;
   fillShowNick($("showNick"), R.nick || "");
   var short = pctClaim(R.pct, R.band, true);
   var pct = $("showPct");
@@ -119,7 +124,6 @@ function syncNickBits(){
 function renderResult(delay){
   markMode("moments");
   var band = R.band;
-  var knowPct = Math.round(state.know / 2 * 100);
   var list = nickList(R.name);
   R.nickIdx = ((R.nickIdx || 0) + list.length) % list.length;
   R.nick = list[R.nickIdx];
@@ -151,32 +155,20 @@ function renderResult(delay){
         '<div class="track"><i data-w="' + R.pct + '"></i></div>' +
         '<div class="cap">' + esc(R.warn) + '</div>' +
       '</div>' +
-      '<div class="stat">' +
-        '<div class="row"><b>懂行程度</b><span>' + R.know + ' / 2</span></div>' +
-        '<div class="track m"><i data-w="' + knowPct + '"></i></div>' +
-        '<div class="cap">' + esc(R.knowDesc) + '</div>' +
-      '</div>' +
-      '<div class="stat">' +
-        '<div class="row"><b>饮酒节奏</b><span>' + esc(R.speedName) + '</span></div>' +
-        '<div class="track y"><i data-w="' + (R.speedKey === "fast" ? 88 : R.speedKey === "steady" ? 62 : 34) + '"></i></div>' +
-        '<div class="cap">' + esc(SPEED_DESC[R.speedKey]) + '</div>' +
+      '<div class="statrow">' +
+        '<div class="mini"><b>懂行 ' + R.know + ' / 2</b><span>' + esc(R.knowDesc) + '</span></div>' +
+        '<div class="mini"><b>' + esc(R.speedName) + '</b><span>' + esc(SPEED_DESC[R.speedKey]) + '</span></div>' +
       '</div>' +
     '</div>' +
-    '<div class="convert">' +
-      '<div class="conv"><b>' + R.ml + ' ml</b><span>52 度白酒 · 约 ' + (R.ml / 50).toFixed(1) + ' 两</span></div>' +
-      '<div class="conv"><b>' + R.beer + ' 瓶</b><span>折算啤酒 · 500ml</span></div>' +
-    '</div>' +
+    '<div class="convline">折算 ≈ <b>' + R.ml + 'ml</b> 52° 白酒（' + (R.ml / 50).toFixed(1) + ' 两）· <b>' + R.beer + '</b> 瓶啤酒</div>' +
     '<div class="modes">' +
       '<button type="button" class="mode" id="pass">出示同桌</button>' +
       '<button type="button" class="mode on" id="moments">发朋友圈</button>' +
     '</div>' +
-    '<div class="actions">' +
-      '<button class="btn" id="save" type="button">保存图片</button>' +
-      '<p class="savehint" id="savehint">弹出后请长按图片，才能存进相册</p>' +
-      '<div class="row2">' +
-        '<button class="btn ghost" id="share" type="button">分享</button>' +
-        '<button class="btn ghost" id="again" type="button">再测一次</button>' +
-      '</div>' +
+    '<div class="row3">' +
+      '<button class="btn ghost" id="save" type="button">保存图片</button>' +
+      '<button class="btn ghost" id="share" type="button">分享</button>' +
+      '<button class="btn ghost" id="again" type="button">再测一次</button>' +
     '</div>' +
     '<div class="qrow" id="qrow">' +
       '<img class="qimg" id="qimg" alt="扫码测一测">' +

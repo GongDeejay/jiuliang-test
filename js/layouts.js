@@ -33,7 +33,7 @@ function layoutVessels(q){
 }
 
 function layoutAges(q){
-  var h = '<div class="ages" id="opts">';
+  var h = '<div class="ages' + (q.o.length === 5 ? " five" : "") + '" id="opts">';
   q.o.forEach(function(o, i){
     h += '<button class="age" data-i="' + i + '" style="animation-delay:' + (i * 45) + 'ms">' +
            AGES[i] + '<span class="yrs">' + o.age + '</span>' +
