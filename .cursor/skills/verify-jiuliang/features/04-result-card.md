@@ -4,8 +4,8 @@
 - 结果称谓：`#rtitle` 显示绰号大字（如"宋三斤"），配套酒量档位 stats
 - `#pctline`：按这套题的刻度说「你超过了 X%」。X 就是 `R.pct`（`computeCore` 里 `(cap-12)/88*100`，夹在 3–99），不是第二套分，也不是全国普查。最低档不报百分比，写成「今晚你是醒着的那个，这桌靠你收场」
 - `#shareline`：预设句「我是宋三斤，你几两？」，不分享也能看见结果
-- 结算页布局 v2（2026-11-11 简化）：stats 卡内只剩「酒量基数」一条 track + cap，懂行/节奏压缩为 `.statrow` 两枚 `.mini`（无 track）；折算合并为 `.convline` 单行（含「折算」「瓶啤酒」关键字，有断言）；动作区 = `.modes` 两主按钮（出示同桌/发朋友圈）+ `.row3` 三 ghost（保存/分享/再测一次）；页面级 savehint 已删（长按提示在浮层和 toast 里）
-- `#reroll` "↻ 换一个"：同姓换候选绰号，并重写 `#qimg` 的 `data-url`
+- 结算页布局 v3（2026-11-11 第三轮精简）：`.rtag`「你的酒桌绰号 · 第 X/7 级」和 `.convline` 折算行已删（用户反馈重复且刻板），`.rhead` 只剩右对齐的 `#reroll`；stats 卡内只剩「酒量基数」一条 track + cap，懂行/节奏压缩为 `.statrow` 两枚 `.mini`（无 track）；动作区 = `.modes` 两主按钮（出示同桌/发朋友圈）+ `.row3` 三 ghost（保存/分享/再测一次）；页面级 savehint 已删（长按提示在浮层和 toast 里）。验证断言：`.rtag` 与 `.convline` 必须不存在，`nickList(R.name).length >= 6`
+- `#reroll` "↻ 换一个"：同姓换候选绰号，并重写 `#qimg` 的 `data-url`。候选池 v2（data.js `NICK_SPECIAL` 每酒风 2 个 + `NICK_FUN` 按酒量档分层 low/mid/high，共约 9 个）；酒牌短码 v2：`nickIdx` 占 4 bit（0-15），v1 旧码（2 bit）仍可解，金样例 `27JTX2X42CWG` 锁定兼容性
 - 网址二维码：`#qimg`。`data-url` 与图里编码的是同一条 `resultUrl()`：没有门禁码时结果在 `sharecode`，已有解不开的 `sharecode`（线上 `W4XEIG3UOR`）时原样保留、结果在 `from`
 - 若是从别人的酒牌进来的，`#vs` / `#vsLine` 并排两个绰号和一句桌边话。这一屏可以高出 667，冷启动结算页不行
 - 结算页文案硬要求：不出现"酒桌人格测试"措辞，只叫"酒桌绰号"

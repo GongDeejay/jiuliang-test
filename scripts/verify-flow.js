@@ -65,7 +65,9 @@ async page => {
       qr: document.getElementById("qimg").src.length > 10,
       pct: pct,
       share: document.getElementById("shareline").textContent,
-      conv: (document.querySelector(".convline") || {}).textContent || "",
+      rtagGone: !document.querySelector(".rtag"),
+      convGone: !document.querySelector(".convline"),
+      cand: nickList(R.name).length,
       band: R.band,
       n: R.pct,
       decoded: d && d.nick,
@@ -84,9 +86,11 @@ async page => {
   else if (/全国|全网|只超过/.test(result.pct)) bad("刻度写成了普查: " + result.pct);
   else ok("刻度「" + result.pct + "」");
   if (result.share !== "我是" + result.nick + "，你几两？") bad("分享句不对: " + result.share);
-  else ok("分享句「" + result.share + "」");
-  if (result.conv.indexOf("折算") < 0 || result.conv.indexOf("瓶啤酒") < 0) bad("折算行缺失: " + result.conv);
-  else ok("折算行「" + result.conv + "」");
+  else ok("分享句「" + result.nick + "，你几两？」");
+  if (!result.rtagGone) bad("rtag 未清理");
+  else if (!result.convGone) bad("折算行未清理");
+  else if (result.cand < 6) bad("绰号候选太少: " + result.cand);
+  else ok("头部精简✓ 绰号候选 " + result.cand + " 个");
   if (result.decoded !== result.nick) bad("二维码短码解出的绰号对不上");
   else ok("短码对得上「" + result.decoded + "」");
   await shot("result.png");

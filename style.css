@@ -521,12 +521,7 @@
 
   /* ---------- result ---------- */
   #s-result{padding:0 0 0;position:relative;}
-  .rhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;}
-  .rtag{
-    display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;
-    background:var(--mint);color:#0F5548;border:2px solid var(--ink);
-    padding:3px 10px;border-radius:999px;transform:rotate(-1.5deg);
-  }
+  .rhead{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:2px;}
   .reroll{
     flex:0 0 auto;font-family:inherit;font-size:11px;font-weight:800;
     color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:999px;
@@ -566,9 +561,6 @@
   .mini{min-width:0;background:#FFF8E1;border:2px solid var(--ink);border-radius:10px;padding:3px 7px 4px;box-shadow:2px 2px 0 var(--ink);}
   .mini b{display:block;font-size:12px;font-weight:900;color:#4A3F33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .mini span{display:block;font-size:9px;color:var(--muted);font-weight:700;line-height:1.25;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-  .convline{margin:0 0 5px;text-align:center;background:#FFF1C9;border:2.5px solid var(--ink);border-radius:12px;box-shadow:2px 2px 0 var(--ink);padding:4px 8px;font-size:11.5px;font-weight:800;color:#5C5145;}
-  .convline b{color:var(--ink);font-weight:900;font-variant-numeric:tabular-nums;}
 
   .badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
   .badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:#fff;border:2px solid var(--ink);}

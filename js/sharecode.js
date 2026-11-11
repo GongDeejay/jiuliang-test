@@ -94,10 +94,13 @@ function encodeShare(res){
   if (!list.length) return "";
   var nickIdx = list.indexOf(res.nick);
   if (nickIdx < 0) nickIdx = (res.nickIdx || 0) % list.length;
-  if (nickIdx > 3) return "";
-  var bytes = [(1 << 4) | name.length];
+  if (nickIdx > 15) nickIdx = nickIdx % 16;
+  /* v1：nickIdx 占 2 位（0-3，旧码）；v2：多一个字节，nickIdx 占 4 位（0-15） */
+  var ver = nickIdx > 3 ? 2 : 1;
+  var bytes = [(ver << 4) | name.length];
   for (var i = 0; i < nameBytes.length; i++) bytes.push(nameBytes[i]);
-  bytes.push((band << 5) | (styleIdx << 2) | nickIdx);
+  bytes.push((band << 5) | (styleIdx << 2) | (ver === 2 ? (nickIdx >> 2) : nickIdx));
+  if (ver === 2) bytes.push(nickIdx & 3);
   var c = crc16(bytes);
   bytes.push((c >> 8) & 255, c & 255);
   return b32encode(bytes);
@@ -105,23 +108,25 @@ function encodeShare(res){
 
 function decodeShare(token){
   if (!token || typeof token !== "string") return null;
-  if (!/^[0-9A-Za-z]{12}$/.test(token) && !/^[0-9A-Za-z]{16}$/.test(token)) return null;
+  if (!/^[0-9A-Za-z]{12}$/.test(token) && !/^[0-9A-Za-z]{13}$/.test(token) &&
+      !/^[0-9A-Za-z]{16}$/.test(token) && !/^[0-9A-Za-z]{18}$/.test(token)) return null;
   var bytes = b32decode(token);
-  if (!bytes || (bytes.length !== 7 && bytes.length !== 10)) return null;
+  if (!bytes) return null;
+  var ver = bytes[0] >> 4;
+  var nameLen = bytes[0] & 15;
+  if ((ver !== 1 && ver !== 2) || (nameLen !== 1 && nameLen !== 2)) return null;
+  var nb = nameLen * 3;
+  var flen = ver === 2 ? 2 : 1;
+  if (bytes.length !== 1 + nb + flen + 2) return null;
   var crc = (bytes[bytes.length - 2] << 8) | bytes[bytes.length - 1];
   var body = bytes.slice(0, bytes.length - 2);
   if (crc16(body) !== crc) return null;
-  var ver = body[0] >> 4;
-  var nameLen = body[0] & 15;
-  if (ver !== 1 || (nameLen !== 1 && nameLen !== 2)) return null;
-  var nb = nameLen * 3;
-  if (body.length !== 1 + nb + 1) return null;
-  var name = utf8Decode(body.slice(1, 1 + nb));
+  var name = utf8Decode(bytes.slice(1, 1 + nb));
   if (!name || !/^[\u4e00-\u9fa5]{1,2}$/.test(name) || cleanName(name) !== name) return null;
-  var flags = body[1 + nb];
+  var flags = bytes[1 + nb];
   var band = flags >> 5;
   var styleIdx = (flags >> 2) & 7;
-  var nickIdx = flags & 3;
+  var nickIdx = ver === 2 ? (((flags & 3) << 2) | (bytes[1 + nb + 1] & 3)) : (flags & 3);
   if (band > 6 || styleIdx > 5) return null;
   var styleKey = STYLE_KEYS[styleIdx];
   var list = nickCandidates(name, band, styleKey);

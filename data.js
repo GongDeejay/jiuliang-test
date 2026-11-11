@@ -370,11 +370,32 @@
   var LIANG = ["一口","二两","三两","半斤","八两","一斤","三斤"];
 
   var NICK_SPECIAL = {
-    book:    function(n, l){ return n + l + "先生"; },
-    hero:    function(n, l){ return n + "三碗"; },
-    gourmet: function(n, l){ return n + "记" + l + "馆"; },
-    host:    function(n, l){ return "主陪" + n + l; },
-    escape:  function(n, l){ return n + "半杯"; },
-    jianghu: function(n, l){ return "江湖" + n + l; }
+    book:    [function(n, l){ return n + l + "先生"; }, function(n, l){ return "文斗" + n; }],
+    hero:    [function(n, l){ return n + "三碗"; },      function(n, l){ return "义气" + n; }],
+    gourmet: [function(n, l){ return n + "记" + l + "馆"; }, function(n, l){ return "下酒菜" + n; }],
+    host:    [function(n, l){ return "主陪" + n + l; },   function(n, l){ return n + "局司令"; }],
+    escape:  [function(n, l){ return n + "半杯"; },      function(n, l){ return "影帝" + n; }],
+    jianghu: [function(n, l){ return "江湖" + n + l; },  function(n, l){ return "老炮儿" + n; }]
+  };
+
+  /* 搞笑加成池：按酒量档分层，全部短圆好念。
+     low = 一口/二两，mid = 三两/半斤/八两，high = 一斤/三斤。 */
+  var NICK_FUN = {
+    all: [
+      function(n, l){ return n + l + "本尊"; },
+      function(n, l){ return "老酒蒙" + n; }
+    ],
+    low: [
+      function(n){ return n + "以茶代酒"; },
+      function(n){ return "小茶杯" + n; }
+    ],
+    mid: [
+      function(n){ return "微醺" + n; },
+      function(n){ return n + "不倒"; }
+    ],
+    high: [
+      function(n){ return "酒蒙子" + n; },
+      function(n){ return "深水" + n; }
+    ]
   };
 

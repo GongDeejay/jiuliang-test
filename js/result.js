@@ -141,7 +141,6 @@ function renderResult(delay){
 
   var html =
     '<div class="rhead">' +
-      '<span class="rtag">你的酒桌绰号 · 第 ' + (band + 1) + '/7 级</span>' +
       '<button class="reroll" id="reroll" type="button">↻ 换一个</button>' +
     '</div>' +
     '<h2 class="rtitle" id="rtitle">' + nickHtml(R.nick, band) + '</h2>' +
@@ -160,7 +159,6 @@ function renderResult(delay){
         '<div class="mini"><b>' + esc(R.speedName) + '</b><span>' + esc(SPEED_DESC[R.speedKey]) + '</span></div>' +
       '</div>' +
     '</div>' +
-    '<div class="convline">折算 ≈ <b>' + R.ml + 'ml</b> 52° 白酒（' + (R.ml / 50).toFixed(1) + ' 两）· <b>' + R.beer + '</b> 瓶啤酒</div>' +
     '<div class="modes">' +
       '<button type="button" class="mode" id="pass">出示同桌</button>' +
       '<button type="button" class="mode on" id="moments">发朋友圈</button>' +

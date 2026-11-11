@@ -10,10 +10,14 @@ function cleanName(raw){
 
 function nickCandidates(name, band, styleKey){
   var l = LIANG[band];
-  var sp = (NICK_SPECIAL[styleKey] || NICK_SPECIAL.jianghu)(name, l);
-  var raw = [name + l, "老" + name + l, "小" + name + l, sp];
+  var spArr = NICK_SPECIAL[styleKey] || NICK_SPECIAL.jianghu;
+  var tier = band <= 1 ? "low" : band <= 4 ? "mid" : "high";
+  var fun = NICK_FUN.all.concat(NICK_FUN[tier]);
+  var raw = [name + l, "老" + name + l, spArr[0](name, l), spArr[1](name, l)];
+  fun.forEach(function(f){ raw.push(f(name, l)); });
+  raw.push("小" + name + l);
   var out = [];
-  raw.forEach(function(x){ if (out.indexOf(x) < 0) out.push(x); });
+  raw.forEach(function(x){ if (x && out.indexOf(x) < 0) out.push(x); });
   return out;
 }
 
