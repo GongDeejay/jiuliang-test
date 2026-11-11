@@ -1,13 +1,17 @@
 # 结果图保存与分享
 
 ## Sub-features
-- `#save` 保存结果图：`drawCard()` 动态画 PNG。`isTouch()` 分流——触屏且有 share-files 能力走 `navigator.share`；触屏无能力走图片浮层；桌面走 `a[download]` 下载（文件名含绰号）
-- `#share` 分享：触屏走 share 面板（带图片+文案）；桌面复制邀请文案到剪贴板（按钮变"已复制"）
-- `.imgov` 图片浮层：`data:image/png` data URL 的 `<img>` + "长按图片保存"提示 + `.imgov-close` 关闭
-- `shareWithFallback`：1.6s 内 share 未 settle 则兜底弹浮层
+- 两套图都走 `drawCard()`：`cardMode === "show"` 是出示版（绰号竖排铺满酒风色），否则是朋友圈版（酒风色块、一句钩子、金句、刻度、右下角固定二维码）。尺寸在页面全局 `CARD_SPEC`
+- `#pass`「出示同桌」：打开 `#showstage`，手机可以直接递过去。最低档不写百分比。`#showSave` 再走保存管线
+- `#moments`「发朋友圈」和 `#save`：保存当前版式。默认是朋友圈版
+- `#savehint` 和浮层 `.imgov-badge` 都写明长按。微信里保存靠长按 data URL，不要改回 blob:
+- `#share` 分享：触屏走 share 面板（带图片 + 「我是某绰号，你几两？」）；桌面复制这句话和链接（按钮变"已复制"）。不分享也能看结果
+- 朋友圈浮层里可以「不上这句」，也可以「写上断片年纪」。断片年纪默认不在图上
+- `.imgov` 图片浮层：`data:image/png` 的 `<img>` + `.imgov-close`
+- `shareWithFallback`：1.6s 内 share 未 settle 则兜底弹浮层。无头环境里 `navigator.share` 会挂起，这个兜底不能删、不能改短
 
 ## How to get to it (user POV)
-结算页底部点"保存图片"或"分享"按钮。
+结算页点「出示同桌」「发朋友圈」「保存图片」或「分享」。
 
 ## Driving it with playwright-cli
 

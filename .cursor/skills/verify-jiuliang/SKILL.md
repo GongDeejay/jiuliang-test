@@ -1,6 +1,6 @@
 ---
 name: verify-jiuliang
-description: 酒量绰号测试（jiuliang-test）的行为验证 skill。以用户视角驱动真实页面，跑通 启动页→八题作答→贵姓揭晓→结算页→保存分享 全流程并留存证据。改动 index.html / style.css / data.js / js/*.js 之后、上线发布之前必须使用；需要证明某个功能可用时也用它。
+description: 酒量绰号测试（jiuliang-test）的行为验证 skill。以用户视角驱动真实页面，跑通 启动页→八题作答→贵姓揭晓→结算页→出示/朋友圈两张图→别人酒牌落地与对照 全流程并留存证据。改动 index.html / style.css / data.js / js/*.js 之后、上线发布之前必须使用；需要证明某个功能可用时也用它。
 ---
 
 # verify-jiuliang
@@ -22,7 +22,7 @@ SERVER_PID=$!   # 记住这个 PID，cleanup 只杀它
 出任何异常先跑一次只读体检，判断"这个实例值不值得驱动"：
 
 1. `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8899/index.html` == `200`
-2. `node --check` 对下列脚本全部通过（与 `scripts/verify.sh` 的清单一致）：`vendor/qrcode.js`、`data.js`、`js/state.js`、`js/layouts.js`、`js/score.js`、`js/card.js`、`js/share.js`、`js/result.js`、`js/surname.js`、`js/quiz.js`、`js/boot.js`
+2. `node --check` 对下列脚本全部通过（与 `scripts/verify.sh` 的清单一致）：`vendor/qrcode.js`、`data.js`、`js/state.js`、`js/layouts.js`、`js/score.js`、`js/sharecode.js`、`js/card.js`、`js/share.js`、`js/result.js`、`js/surname.js`、`js/quiz.js`、`js/invite.js`、`js/boot.js`
 3. `index.html` 按上述顺序引用这些脚本（`data.js` 在全部 `js/` 之前，`js/boot.js` 最后），并引用 `style.css`。逻辑在 `js/` 下的经典脚本里，不是 ES module，也没有 `app.js`
 
 任何一条不过，修语法/文件引用，不要继续驱动。
@@ -38,7 +38,7 @@ playwright-cli resize 375 667
 playwright-cli run-code 'async page => { /* 见 features/ 各文件 */ }'
 ```
 
-优先句柄（稳定，勿用坐标）：`#start`、`#opts [data-i]`（第 n 个选项用 `.nth(n)`）、`.schip`（姓氏块）、`#nameGo`、`#rtitle`、`#reroll`、`#save`、`#share`、`#qimg`、`.imgov`、`.imgov-close`。
+优先句柄（稳定，勿用坐标）：`#start`、`#opts [data-i]`（第 n 个选项用 `.nth(n)`）、`.schip`（姓氏块）、`#nameGo`、`#rtitle`、`#reroll`、`#pctline`、`#shareline`、`#pass`（出示同桌）、`#moments`（发朋友圈）、`#save`、`#savehint`、`#share`、`#qimg`（`data-url` 与图里编码的是同一条链接）、`#showstage`、`#showNick`、`#yourturn`、`#inviteLine`、`#vs`、`#vsLine`、`.imgov`、`.imgov-badge`、`.imgov-close`。
 八题题型判别选择器：pmap→`.pmap`、vessels→`.vessels`、ages→`.ages`、table→`.tbl-wrap`、knock→`.scene`、digits→`.digits`、chat→`.replies`、battery→`.gchat`。
 判定高度用 `page.viewportSize().height`（run-code 环境里 `innerHeight` 不可用）。
 
@@ -63,4 +63,4 @@ cleanup 只移除实例与临时状态，`.playwright/evidence/` 里的证明文
 
 ## Helpers
 
-- `scripts/verify.sh`：一条命令跑完 JS 语法检查 + 375×667 全流程 12 项断言（启动页/八题题型与溢出/贵姓页无绰号泄漏/揭晓动画/结算页+二维码），任何 ❌ 即 exit 1。用法：仓库根目录 `bash scripts/verify.sh`。做完全量回归优先用它；单功能探查按 features/ 各文件的 recipe 驱动。
+- `scripts/verify.sh`：一条命令跑完 JS 语法检查、`scripts/check-sharecode.js`（短码往返 / 篡改 / 门禁码 / 刻度文案 / 对照句），再跑 `scripts/verify-flow.js` 的 375×667 全流程（启动页、八题、贵姓、揭晓、结算刻度与一屏、两张结果图、长按浮层、酒牌落地、对照、最低档不报百分比、坏码退回）。任何 ❌ 即 exit 1。用法：仓库根目录 `bash scripts/verify.sh`。截图落在 `.playwright/evidence/`。做完全量回归优先用它；单功能探查按 features/ 各文件的 recipe 驱动。

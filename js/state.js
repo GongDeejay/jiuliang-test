@@ -2,12 +2,25 @@
 "use strict";
 
 var $ = function(id){ return document.getElementById(id); };
-var sIntro = $("s-intro"), sQuiz = $("s-quiz"), sName = $("s-name"), sResult = $("s-result");
-var SCREENS = [sIntro, sQuiz, sName, sResult];
+var sIntro = $("s-intro"), sInvite = $("s-invite"), sQuiz = $("s-quiz"), sName = $("s-name"), sResult = $("s-result");
+var SCREENS = [sIntro, sInvite, sQuiz, sName, sResult];
 var state, idx, locked, R;
+/* peer 是别人酒牌解出来的结果。reset 不清它，再测仍跟同一张牌比。 */
+var peer = null;
+
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+  });
+}
 
 function reset(){
-  state = {cap:0, know:0, sp:{fast:0, steady:0, slow:0}, st:{book:0, hero:0, gourmet:0, host:0, escape:0, jianghu:0}};
+  state = {
+    cap:0, know:0,
+    sp:{fast:0, steady:0, slow:0},
+    st:{book:0, hero:0, gourmet:0, host:0, escape:0, jianghu:0},
+    picks:[], hookSkip:false, hookAge:false
+  };
   idx = 0; locked = false; R = null;
 }
 

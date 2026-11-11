@@ -1,8 +1,27 @@
-/* canvas 结果图。drawCard 只读 R 与 qrcode，不改页面。 */
+/* canvas 结果图。两套版式都从这里出：出示（递手机）和朋友圈（带二维码）。 */
 "use strict";
 
-/* ---------------- 结果图生成 ---------------- */
 var FONT = '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif';
+var cardMode = "moments";
+
+/* 朋友圈二维码钉在这个盒子里，字数变了也不挪位置。 */
+var CARD_SPEC = {
+  dpr: 2,
+  show: {w:750, h:1334},
+  moments: {
+    w: 750,
+    h: 1120,
+    block: {x:40, y:100, w:670, h:440},
+    qr: {x:534, y:900, box:176}
+  }
+};
+
+function markMode(mode){
+  cardMode = mode === "show" ? "show" : "moments";
+  var p = $("pass"), m = $("moments");
+  if (p) p.classList.toggle("on", cardMode === "show");
+  if (m) m.classList.toggle("on", cardMode === "moments");
+}
 
 function rr(g, x, y, w, h, r){
   g.beginPath();
@@ -30,229 +49,256 @@ function wrapText(g, text, maxW){
     var ch = text.charAt(i);
     if (g.measureText(cur + ch).width > maxW && cur.length){
       lines.push(cur); cur = ch;
-    } else {
-      cur += ch;
-    }
+    } else cur += ch;
   }
   if (cur) lines.push(cur);
   return lines;
 }
 
-function drawCard(){
-  var W = 750;
+function styleFace(key){
+  var k = key || (R && R.styleKey) || "jianghu";
+  return STYLE_FACE[k] || STYLE_FACE.jianghu;
+}
+
+function makeQr(text){
+  try {
+    var qr = qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    return qr;
+  } catch (e) { return null; }
+}
+
+function paintQrBox(g, qr, x, y, box){
+  if (!qr) return;
+  var n = qr.getModuleCount();
+  var pad = 14;
+  var cell = Math.floor((box - pad * 2) / n);
+  if (cell < 2) cell = 2;
+  var w = n * cell + pad * 2;
+  var ox = x + Math.floor((box - w) / 2);
+  var oy = y + Math.floor((box - w) / 2);
+  g.fillStyle = "#FFFFFF";
+  rr(g, ox, oy, w, w, 14); g.fill();
+  g.lineWidth = 3.5;
+  g.strokeStyle = "#241C14";
+  rr(g, ox, oy, w, w, 14); g.stroke();
+  g.fillStyle = "#241C14";
+  for (var r = 0; r < n; r++){
+    for (var c = 0; c < n; c++){
+      if (qr.isDark(r, c)) g.fillRect(ox + pad + c * cell, oy + pad + r * cell, cell, cell);
+    }
+  }
+}
+
+function seatLine(i){
+  return ["这桌你先起身", "别人的酒你来挡", "菜比酒重要", "中途离席的那个"][i] || "";
+}
+function batteryLine(i){
+  return ["散场还想组二场", "二场能去，先歇会儿", "二场只喝汤", "二场不去，代驾已叫"][i] || "";
+}
+function vesselLine(i){
+  return ["家里长辈不喝酒", "逢节才开一瓶", "家里每餐二两", "酒坛边长大的"][i] || "";
+}
+function chatLine(i){
+  return ["大哥一句话就干了", "听懂了字面意思", "场面话也接得住", "悄悄把酒换成茶"][i] || "";
+}
+function provinceLine(i){
+  var p = PROVINCES[i];
+  return p ? ("家乡" + p.nm + "，" + p.br) : "";
+}
+
+/* 断片年纪默认不上桌。其余挑一句跟酒风最贴的。 */
+function ageHook(picks){
+  if (!picks || picks.length < 3) return null;
+  var text = ["第一次断片在初中", "第一次断片在高中", "第一次断片在大学", "到现在还没断片"][picks[2]];
+  return text ? {text: text, sensitive: true} : null;
+}
+
+function defaultHook(picks){
+  if (!picks || picks.length < 8 || !R) return null;
+  var style = R.styleKey;
+  var order;
+  if (style === "hero" || style === "host") order = [seatLine(picks[3]), batteryLine(picks[7]), chatLine(picks[6]), vesselLine(picks[1]), provinceLine(picks[0])];
+  else if (style === "escape") order = [batteryLine(picks[7]), seatLine(picks[3]), chatLine(picks[6]), vesselLine(picks[1]), provinceLine(picks[0])];
+  else if (style === "gourmet") order = [vesselLine(picks[1]), seatLine(picks[3]), chatLine(picks[6]), batteryLine(picks[7]), provinceLine(picks[0])];
+  else if (style === "book") order = [chatLine(picks[6]), vesselLine(picks[1]), seatLine(picks[3]), batteryLine(picks[7]), provinceLine(picks[0])];
+  else order = [vesselLine(picks[1]), batteryLine(picks[7]), seatLine(picks[3]), chatLine(picks[6]), provinceLine(picks[0])];
+  for (var i = 0; i < order.length; i++){
+    if (order[i]) return {text: order[i], sensitive: false};
+  }
+  return null;
+}
+
+function activeHook(){
+  if (!state || !state.picks || state.hookSkip) return null;
+  if (state.hookAge) return ageHook(state.picks);
+  return defaultHook(state.picks);
+}
+
+function newCanvas(w, h){
   var cv = document.createElement("canvas");
-  var dpr = 2;
-  cv.width = W * dpr;
+  var dpr = CARD_SPEC.dpr;
+  cv.width = w * dpr;
+  cv.height = h * dpr;
   var g = cv.getContext("2d");
   g.scale(dpr, dpr);
   g.textBaseline = "alphabetic";
+  return {cv: cv, g: g};
+}
 
-  /* 预计算纵向布局，动态定高 */
-  g.font = "800 29px " + FONT;
-  var rl = wrapText(g, R.roast, 566);
-  var qh = 40 + rl.length * 44;
-  var cardY = 322 + qh + 22;
-  var cvy = cardY + 320;
-  var bdgY = cvy + 122;
-  var mY = bdgY + 66;
+/* 出示版：绰号竖排铺满，截图也能一眼读完。最低档不写百分比。 */
+function drawShowCard(){
+  var W = CARD_SPEC.show.w, H = CARD_SPEC.show.h;
+  var box = newCanvas(W, H);
+  var g = box.g;
+  var face = styleFace();
+  g.fillStyle = face.bg;
+  g.fillRect(0, 0, W, H);
 
-  var qr = null;
-  try {
-    qr = qrcode(0, "M");
-    qr.addData(location.href.split("#")[0]);
-    qr.make();
-  } catch (e) { qr = null; }
+  g.fillStyle = face.fg;
+  g.globalAlpha = 0.9;
+  g.font = "800 30px " + FONT;
+  g.textAlign = "center";
+  g.fillText("你，几两？", W / 2, 88);
+  g.globalAlpha = 1;
 
-  var qrCell = 3, qrn = qr ? qr.getModuleCount() : 0;
-  var qrW = qrn ? qrn * qrCell + 22 : 0;
-  var qrY = mY + 96 + 24;
-  var H = qr ? qrY + qrW + 52 : qrY + 60;
+  var nk = R.nick || (R.name + LIANG[R.band]);
+  var chars = nk.split("");
+  var top = 150, bottom = 1180, avail = bottom - top;
+  var size = Math.floor(avail / chars.length * 0.78);
+  if (size > 240) size = 240;
+  if (size < 64) size = 64;
+  g.font = "900 " + size + "px " + FONT;
+  var gap = Math.min(size * 1.08, avail / chars.length);
+  var blockH = gap * chars.length;
+  var y = top + (avail - blockH) / 2 + size * 0.82;
+  for (var i = 0; i < chars.length; i++) g.fillText(chars[i], W / 2, y + i * gap);
 
-  cv.height = H * dpr;
-  g.scale(dpr, dpr);
+  var short = pctClaim(R.pct, R.band, true);
+  if (short){
+    g.globalAlpha = 0.92;
+    g.font = "800 34px " + FONT;
+    g.fillText(short, W / 2, H - 72);
+    g.globalAlpha = 1;
+  }
+  g.textAlign = "left";
+  return box.cv;
+}
+
+/* 朋友圈版：酒风色块、一句可讲的、金句、刻度，二维码固定右下。 */
+function drawMomentsCard(){
+  var spec = CARD_SPEC.moments;
+  var W = spec.w, H = spec.h;
+  var box = newCanvas(W, H);
+  var g = box.g;
+  var face = styleFace();
+  var block = spec.block;
 
   g.fillStyle = "#FFF7E3";
   g.fillRect(0, 0, W, H);
-
   g.save();
-  g.globalAlpha = .55;
+  g.globalAlpha = 0.55;
   g.fillStyle = "#FFE9A8";
-  g.beginPath(); g.arc(680, 60, 190, 0, Math.PI * 2); g.fill();
-  g.fillStyle = "#FFD9C7";
-  g.beginPath(); g.arc(40, 1010, 170, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(680, 40, 120, 0, Math.PI * 2); g.fill();
   g.restore();
 
-  /* 品牌胶囊 */
   g.font = "800 24px " + FONT;
-  var brandText = "你，几两？";
-  var bw = g.measureText(brandText).width + 48;
-  sticker(g, 48, 44, bw, 48, 24, "#FFCE3A");
+  var brand = "你，几两？";
+  var bw = g.measureText(brand).width + 48;
+  sticker(g, 40, 36, bw, 48, 24, "#FFCE3A");
   g.fillStyle = "#241C14";
   g.font = "800 24px " + FONT;
-  g.fillText(brandText, 72, 76);
+  g.textAlign = "left";
+  g.fillText(brand, 64, 68);
 
-  /* 小标签 */
-  g.font = "800 22px " + FONT;
-  var tagText = "你的酒桌绰号";
-  var tw = g.measureText(tagText).width + 40;
-  sticker(g, 48, 126, tw, 44, 22, "#37C9AE");
-  g.fillStyle = "#0F5548";
-  g.font = "800 22px " + FONT;
-  g.fillText(tagText, 68, 155);
+  sticker(g, block.x, block.y, block.w, block.h, 28, face.bg);
+  g.fillStyle = face.fg;
+  g.textAlign = "center";
+  g.font = "800 36px " + FONT;
+  g.fillText(STYLE_NAME[R.styleKey] || "", W / 2, block.y + 78);
 
-  /* 绰号 */
   var nk = R.nick || (R.name + LIANG[R.band]);
-  var liang = LIANG[R.band];
-  var size = 76;
+  var size = 92;
   g.font = "900 " + size + "px " + FONT;
-  while (g.measureText(nk).width > 654 && size > 40){ size -= 2; g.font = "900 " + size + "px " + FONT; }
-  var titleY = 258;
-  var seg = nk.split(liang);
-  if (seg.length === 2){
+  while (g.measureText(nk).width > block.w - 64 && size > 46){
+    size -= 2;
+    g.font = "900 " + size + "px " + FONT;
+  }
+  g.fillText(nk, W / 2, block.y + 250);
+  g.font = "800 28px " + FONT;
+  g.fillText(R.arch || "", W / 2, block.y + block.h - 56);
+
+  var hook = activeHook();
+  g.textAlign = "left";
+  if (hook){
     g.fillStyle = "#241C14";
-    g.fillText(seg[0], 48, titleY);
-    var w0 = g.measureText(seg[0]).width;
-    g.fillStyle = "#FF6B35";
-    g.fillText(liang, 48 + w0, titleY);
-    var w1 = g.measureText(liang).width;
-    g.fillStyle = "#241C14";
-    g.fillText(seg[1], 48 + w0 + w1, titleY);
-  } else {
-    g.fillStyle = "#241C14";
-    g.fillText(nk, 48, titleY);
+    g.font = "900 32px " + FONT;
+    g.fillText(hook.text, 48, 588);
   }
 
-  g.fillStyle = "#7B6E5F";
-  g.font = "700 23px " + FONT;
-  g.fillText(R.title + " · 酒量第 " + (R.band + 1) + "/7 级", 48, titleY + 48);
-
-  /* 评语卡 */
-  g.font = "800 29px " + FONT;
-  var rl = wrapText(g, R.roast, 566);
-  var qh = 40 + rl.length * 44;
-  sticker(g, 48, 322, 654, qh, 20, "#241C14");
-  g.fillStyle = "#FFEFC2";
-  g.font = "800 29px " + FONT;
-  g.fillText("“", 66, 352);
-  for (var i = 0; i < rl.length; i++){
-    g.fillText(rl[i], 100, 372 + i * 44);
-  }
-
-  /* 数据卡 */
-  var cardY = 322 + qh + 22;
-  sticker(g, 48, cardY, 654, 300, 20, "#FFFFFF");
-
-  var rows = [
-    {b:"酒量基数", v:R.pct + " / 100", w:R.pct / 100, c:"#FF6B35", cap:R.warn},
-    {b:"懂行程度", v:R.know + " / 2",   w:R.know / 2,    c:"#37C9AE", cap:R.knowDesc},
-    {b:"饮酒节奏", v:R.speedName, w:(R.speedKey === "fast" ? .88 : R.speedKey === "steady" ? .62 : .34), c:"#FFCE3A", cap:SPEED_DESC[R.speedKey]}
-  ];
-
-  for (var r = 0; r < rows.length; r++){
-    var by = cardY + 40 + r * 92;
-    g.font = "800 25px " + FONT;
-    g.fillStyle = "#4A3F33";
-    g.fillText(rows[r].b, 80, by);
-    g.fillStyle = "#E4521C";
-    g.font = "900 25px " + FONT;
-    g.textAlign = "right";
-    g.fillText(rows[r].v, 670, by);
-    g.textAlign = "left";
-
-    var ty = by + 16;
-    g.fillStyle = "#F1E7D2";
-    rr(g, 80, ty, 590, 16, 8); g.fill();
-    g.fillStyle = rows[r].c;
-    var fw = Math.max(16, 590 * rows[r].w);
-    rr(g, 80, ty, fw, 16, 8); g.fill();
-
-    g.fillStyle = "#7B6E5F";
-    g.font = "600 21px " + FONT;
-    g.fillText(rows[r].cap, 80, ty + 44);
-  }
-
-  /* 折算 */
-  var cvy = cardY + 320;
-  sticker(g, 48, cvy, 318, 100, 18, "#FFF1C9");
-  sticker(g, 384, cvy, 318, 100, 18, "#E4F6F1");
-
-  g.fillStyle = "#241C14";
-  g.font = "900 40px " + FONT;
-  g.fillText(R.ml + " ml", 76, cvy + 52);
-  g.fillStyle = "#5C5145";
-  g.font = "700 20px " + FONT;
-  g.fillText("52 度白酒 · 约 " + (R.ml / 50).toFixed(1) + " 两", 76, cvy + 80);
-
-  g.fillStyle = "#241C14";
-  g.font = "900 40px " + FONT;
-  g.fillText(R.beer + " 瓶", 412, cvy + 52);
-  g.fillStyle = "#5C5145";
-  g.font = "700 20px " + FONT;
-  g.fillText("折算啤酒 · 500ml", 412, cvy + 80);
-
-  /* 徽章 */
-  var bdgY = cvy + 122;
-  var bdgs = [R.knowName, R.speedName, R.arch + "档"];
-  var bx = 48;
-  for (var b = 0; b < bdgs.length; b++){
-    g.font = "800 21px " + FONT;
-    var bwd = g.measureText(bdgs[b]).width + 34;
-    sticker(g, bx, bdgY, bwd, 46, 23, R.know >= 2 && b === 0 ? "#FF8FB1" : "#FFFFFF");
-    g.fillStyle = "#241C14";
-    g.font = "800 21px " + FONT;
-    g.fillText(bdgs[b], bx + 17, bdgY + 30);
-    bx += bwd + 10;
-  }
-
-  /* 金句 */
-  var mY = bdgY + 66;
   g.save();
   g.fillStyle = "#FFF3D0";
-  rr(g, 48, mY, 654, 96, 18); g.fill();
-  g.setLineDash([9, 7]);
+  rr(g, 40, 608, 670, 100, 18); g.fill();
+  g.setLineDash([8, 6]);
   g.lineWidth = 3.5;
   g.strokeStyle = "#241C14";
-  rr(g, 48, mY, 654, 96, 18); g.stroke();
+  rr(g, 40, 608, 670, 100, 18); g.stroke();
   g.restore();
-
   g.fillStyle = "#8A7A62";
-  g.font = "800 19px " + FONT;
-  g.fillText("你的酒桌金句", 74, mY + 32);
+  g.font = "800 18px " + FONT;
+  g.fillText("酒桌金句", 64, 642);
   g.fillStyle = "#241C14";
-  g.font = "800 26px " + FONT;
-  g.fillText(R.motto, 74, mY + 68);
+  var motto = R.motto || "";
+  var mottoSize = 26;
+  g.font = "800 " + mottoSize + "px " + FONT;
+  while (g.measureText(motto).width > 620 && mottoSize > 18){
+    mottoSize -= 1;
+    g.font = "800 " + mottoSize + "px " + FONT;
+  }
+  g.fillText(motto, 64, 680);
 
-  /* 二维码 */
-  if (qr){
-    var qx = W - 48 - qrW;
-    g.fillStyle = "#FFFFFF";
-    rr(g, qx, qrY, qrW, qrW, 16); g.fill();
-    g.lineWidth = 3.5; g.strokeStyle = "#241C14";
-    rr(g, qx, qrY, qrW, qrW, 16); g.stroke();
-    g.fillStyle = "#241C14";
-    for (var pr = 0; pr < qrn; pr++){
-      for (var pc = 0; pc < qrn; pc++){
-        if (qr.isDark(pr, pc)){
-          g.fillRect(qx + 11 + pc * qrCell, qrY + 11 + pr * qrCell, qrCell + .4, qrCell + .4);
-        }
-      }
-    }
-    g.fillStyle = "#241C14";
-    g.font = "900 28px " + FONT;
-    g.fillText("扫码 · 测测你几两", 48, qrY + qrW / 2 - 4);
-    g.fillStyle = "#8A7A62";
-    g.font = "700 20px " + FONT;
-    g.fillText("jiuliang-test.app.workbuddy.host", 48, qrY + qrW / 2 + 30);
+  var claim = pctClaim(R.pct, R.band, false);
+  var claimFill = R.band === 0 ? "#E4F6F1" : "#FFCE3A";
+  sticker(g, 40, 728, 670, 104, 18, claimFill);
+  g.fillStyle = "#241C14";
+  var claimSize = 26;
+  g.font = "900 " + claimSize + "px " + FONT;
+  while (g.measureText(claim).width > 610 && claimSize > 18){
+    claimSize -= 1;
+    g.font = "900 " + claimSize + "px " + FONT;
+  }
+  var claimLines = wrapText(g, claim, 610);
+  if (claimLines.length > 1){
+    g.fillText(claimLines[0], 64, 778);
+    g.fillText(claimLines[1], 64, 812);
+  } else {
+    g.fillText(claim, 64, 792);
   }
 
-  /* 底部 */
+  var qr = makeQr(resultUrl() || location.href.split("#")[0]);
+  paintQrBox(g, qr, spec.qr.x, spec.qr.y, spec.qr.box);
+  g.fillStyle = "#241C14";
+  g.font = "900 28px " + FONT;
+  g.fillText("扫码 · 测测你几两", 48, 968);
+  g.font = "800 24px " + FONT;
+  var sentence = "我是" + nk + "，你几两？";
+  var ss = 24;
+  g.font = "800 " + ss + "px " + FONT;
+  while (g.measureText(sentence).width > 460 && ss > 16){
+    ss -= 1;
+    g.font = "800 " + ss + "px " + FONT;
+  }
+  g.fillText(sentence, 48, 1012);
   g.fillStyle = "#7B6E5F";
-  g.font = "700 20px " + FONT;
-  g.textAlign = "center";
-  g.fillText("结果仅供娱乐 · 适度饮酒 · 切勿酒驾", 375, H - 30);
+  g.font = "700 16px " + FONT;
+  g.fillText("结果仅供娱乐 · 按本题刻度 · 切勿酒驾", 48, 1092);
   g.textAlign = "left";
+  return box.cv;
+}
 
-  return cv;
+function drawCard(){
+  return cardMode === "show" ? drawShowCard() : drawMomentsCard();
 }
 
 function cardBlob(){
