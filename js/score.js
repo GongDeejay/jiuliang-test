@@ -8,13 +8,49 @@ function cleanName(raw){
   return s.slice(0, 1);
 }
 
-function nickList(name){
-  var l = LIANG[R.band];
-  var sp = (NICK_SPECIAL[R.styleKey] || NICK_SPECIAL.jianghu)(name, l);
+function nickCandidates(name, band, styleKey){
+  var l = LIANG[band];
+  var sp = (NICK_SPECIAL[styleKey] || NICK_SPECIAL.jianghu)(name, l);
   var raw = [name + l, "老" + name + l, "小" + name + l, sp];
   var out = [];
   raw.forEach(function(x){ if (out.indexOf(x) < 0) out.push(x); });
   return out;
+}
+
+function nickList(name){
+  return nickCandidates(name, R.band, R.styleKey);
+}
+
+/* R.pct 就是 computeCore 里那条刻度，不是另一套分，也不是实时普查。
+   short=true 给出示版用的短句；最低档不报百分比，避免把手机递到桌上时当众念个位数。 */
+function pctClaim(pct, band, short){
+  pct = Math.round(Number(pct) || 0);
+  if (band === 0) return short ? "" : "今晚你是醒着的那个，这桌靠你收场";
+  if (short) return (band === 1 ? "盖过 " : "超过 ") + pct + "% 酒友";
+  if (band === 1) return "按这套题的刻度，你盖过了 " + pct + "% 的酒友";
+  return "按这套题的刻度，你超过了 " + pct + "% 的酒友";
+}
+
+/* 按两人的酒量词和酒风写一句桌边话。高的那个词在前，最低档不拿「谁先倒」起哄。 */
+function compareTalk(me, other){
+  var a = LIANG[me.band];
+  var b = LIANG[other.band];
+  var gap = me.band - other.band;
+  if (gap === 0){
+    if (me.styleKey !== other.styleKey){
+      return a + "对" + a + "，" + STYLE_NAME[me.styleKey] + "碰" + STYLE_NAME[other.styleKey];
+    }
+    return "都是" + a + "，这桌不用让着喝";
+  }
+  var hi = gap > 0 ? a : b;
+  var lo = gap > 0 ? b : a;
+  var abs = Math.abs(gap);
+  var lowBand = gap >= 0 ? other.band : me.band;
+  if (lowBand === 0) return hi + "对" + lo + "，一口那位今晚负责醒着";
+  if (abs === 1) return hi + "对" + lo + "，就差一杯的事";
+  if (abs === 2) return hi + "对" + lo + "，今晚谁先倒还不好说";
+  if (abs === 3) return hi + "对" + lo + "，劝酒的人悠着点";
+  return hi + "对" + lo + "，这桌得留个清醒的";
 }
 
 function computeCore(){

@@ -1,8 +1,16 @@
-/* 保存、系统分享、长按浮层与文案复制。触屏判定在 isTouch。 */
+/* 保存、系统分享、长按浮层与文案复制。触屏判定在 isTouch。
+   navigator.share 在无头环境会挂起，1.6 秒后仍弹长按浮层，这个兜底不能拿掉。 */
 "use strict";
 
 function fileName(){
-  return "酒桌绰号-" + (R.nick || R.arch) + ".png";
+  var kind = cardMode === "show" ? "出示" : "朋友圈";
+  return "酒桌绰号-" + kind + "-" + (R.nick || R.arch) + ".png";
+}
+
+function shareSentence(){
+  var nick = (R && R.nick) ? R.nick : "";
+  var url = resultUrl();
+  return "我是" + nick + "，你几两？" + (url ? " " + url : "");
 }
 
 function isTouch(){
@@ -17,18 +25,81 @@ function canShareFiles(blob){
   } catch (e) { return false; }
 }
 
+function hookToolsHtml(){
+  if (cardMode !== "moments" || !state || !state.picks || state.picks.length < 8) return "";
+  var cur = activeHook();
+  var age = ageHook(state.picks);
+  var html = '<div class="imgov-tools">';
+  if (cur){
+    html += '<p class="imgov-hook">这句上桌：' + esc(cur.text) + '</p>';
+    html += '<button type="button" class="imgov-tool" data-act="skip">不上这句</button>';
+  } else {
+    html += '<p class="imgov-hook">这句没写上朋友圈</p>';
+    html += '<button type="button" class="imgov-tool" data-act="restore">写上这句</button>';
+  }
+  if (age){
+    if (state.hookAge && !state.hookSkip){
+      html += '<button type="button" class="imgov-tool" data-act="ageoff">不上断片年纪</button>';
+    } else {
+      html += '<button type="button" class="imgov-tool" data-act="ageon">写上断片年纪</button>';
+    }
+  }
+  html += "</div>";
+  return html;
+}
+
+function bindHookTools(ov){
+  var buttons = ov.querySelectorAll(".imgov-tool");
+  for (var i = 0; i < buttons.length; i++){
+    buttons[i].addEventListener("click", function(e){
+      e.stopPropagation();
+      var act = this.getAttribute("data-act");
+      if (act === "skip"){ state.hookSkip = true; state.hookAge = false; }
+      else if (act === "restore"){ state.hookSkip = false; state.hookAge = false; }
+      else if (act === "ageon"){ state.hookSkip = false; state.hookAge = true; }
+      else if (act === "ageoff"){ state.hookSkip = false; state.hookAge = false; }
+      refreshOverlay(ov);
+    });
+  }
+}
+
+function refreshOverlay(ov){
+  var img = ov.querySelector("img");
+  var url = cardDataUrl();
+  if (url && img){
+    img.src = url;
+    var hook = activeHook();
+    img.setAttribute("data-hook", hook ? hook.text : "");
+    img.setAttribute("data-layout", cardMode);
+  }
+  var tools = ov.querySelector(".imgov-tools");
+  var html = hookToolsHtml();
+  if (tools){
+    if (html) tools.outerHTML = html;
+    else tools.parentNode.removeChild(tools);
+  } else if (html){
+    var hint = ov.querySelector(".imgov-hint");
+    if (hint) hint.insertAdjacentHTML("afterend", html);
+  }
+  bindHookTools(ov);
+}
+
 function showImageOverlay(dataUrl){
   if (!dataUrl) { toast("生成失败，请长按页面截图"); return; }
+  var hook = activeHook();
   var ov = document.createElement("div");
   ov.className = "imgov";
   ov.innerHTML =
     '<div class="imgov-card">' +
-      '<img alt="长按保存的结果图">' +
-      '<p class="imgov-hint">长按图片 · 保存到相册或发给朋友</p>' +
+      '<p class="imgov-badge">长按下方图片保存</p>' +
+      '<img alt="' + esc(R && R.nick ? R.nick : "结果图") + '" data-layout="' + cardMode + '" data-hook="' + esc(hook ? hook.text : "") + '">' +
+      '<p class="imgov-hint">按住图片不放，存到相册或发给朋友</p>' +
+      hookToolsHtml() +
       '<button class="imgov-close" type="button">关 闭</button>' +
-    '</div>';
+    "</div>";
   ov.querySelector("img").src = dataUrl;
   document.body.appendChild(ov);
+  bindHookTools(ov);
   requestAnimationFrame(function(){ ov.classList.add("on"); });
   function close(){
     ov.classList.remove("on");
@@ -88,13 +159,12 @@ function saveImage(btn){
 }
 
 function shareResult(btn){
-  var shareUrl = location.href.split("#")[0];
-  var text = "我的酒桌绰号是「" + R.nick + "」（" + R.title + "）。" + R.roast + " 你也来测测 → " + shareUrl;
+  var text = shareSentence();
   cardBlob().then(function(blob){
     if (isTouch()){
       if (canShareFiles(blob)){
         var file = new File([blob], fileName(), {type:"image/png"});
-        shareWithFallback(navigator.share({files:[file], title:"我的酒桌绰号", text:text}), btn);
+        shareWithFallback(navigator.share({files:[file], title:"我是" + R.nick + "，你几两？", text:text}), btn);
       } else {
         showImageOverlay(cardDataUrl());
       }

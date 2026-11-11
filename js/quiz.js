@@ -55,7 +55,7 @@ function pick(el, i, q){
 
   setTimeout(function(){
     fb.classList.remove("on");
-    apply(o);
+    apply(o, i);
   }, 1150);
 }
 
@@ -65,11 +65,13 @@ function dizzy(){
   setTimeout(function(){ w.classList.remove("dizzy"); }, 520);
 }
 
-function apply(o){
+function apply(o, pickAt){
   state.cap += (o.cap || 0);
   if (o.know) { state.know += o.know; }
   if (o.st) { for (var k in o.st) { state.st[k] += o.st[k]; } }
   if (o.sp) { for (var s in o.sp) { state.sp[s] += o.sp[s]; } }
+  if (!state.picks) state.picks = [];
+  state.picks.push(pickAt);
 
   idx++;
   locked = false;

@@ -262,6 +262,15 @@
   ];
 
   var STYLE_NAME = {book:"书生", hero:"豪侠", gourmet:"老饕", host:"场面人", escape:"逃兵", jianghu:"江湖"};
+  /* 酒风色块：出示 / 朋友圈 / 落地页共用，跟贴纸色板同一套 */
+  var STYLE_FACE = {
+    book:    {bg:"#FFCE3A", fg:"#241C14"},
+    hero:    {bg:"#FF6B35", fg:"#241C14"},
+    gourmet: {bg:"#37C9AE", fg:"#10241F"},
+    host:    {bg:"#FF8FB1", fg:"#3A1020"},
+    escape:  {bg:"#D9E4FF", fg:"#241C14"},
+    jianghu: {bg:"#241C14", fg:"#FFCE3A"}
+  };
 
   var ROAST = {
     "0-book":"翻开酒单先做笔记，闻到酒味就已经脸红。",
