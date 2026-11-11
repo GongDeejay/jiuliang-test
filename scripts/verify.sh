@@ -23,13 +23,10 @@ if ! curl -s -o /dev/null "$URL"; then
 fi
 
 # 3. JS 语法检查
-node -e "
-const fs=require('fs');
-const html=fs.readFileSync('index.html','utf8');
-const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-scripts.forEach((m,i)=>{ try{ new Function(m[1]); }catch(e){ console.error('❌ script['+i+'] 语法错误: '+e.message); process.exit(1);} });
-console.log('✓ JS 语法 OK (' + scripts.length + ' 个 script 块)');
-"
+for f in vendor/qrcode.js data.js app.js; do
+  node --check "$f" && echo "✓ 语法 OK: $f" || fail "语法错误: $f"
+done
+grep -q 'src="data.js"' index.html || fail "index.html 未引用 data.js"
 
 # 4. 浏览器全流程验证
 "$PC" close >/dev/null 2>&1 || true

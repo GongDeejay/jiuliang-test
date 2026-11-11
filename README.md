@@ -7,14 +7,15 @@
 ## 项目结构
 
 ```
-index.html            # 主文件（部署入口，与 酒量人格测试.html 内容一致）
-酒量人格测试.html     # 主文件原始名（二者同步维护，改一个要 cp 到另一个）
-.gitignore
-README.md
-scripts/verify.sh     # 自动化全流程验证脚本（见下）
+index.html           # 页面骨架（部署入口，引用下方资源）
+style.css            # 全部样式（贴纸风、动画、响应式）
+data.js              # 题库与文案：8 题选项/吐槽、33 省品牌数据、42 条评语、绰号模板
+app.js               # 全部逻辑：渲染、计分、揭晓动画、canvas 出图、分享
+vendor/qrcode.js     # 二维码生成库（MIT，本地内联，无外部请求）
+scripts/verify.sh    # 自动化全流程验证脚本（见下）
 ```
 
-> ⚠️ 当前代码是**单文件 HTML**（约 4300 行）：CSS、题库数据、渲染逻辑、canvas 出图全部在一个文件里。适合快速迭代，如果后续改动频繁，建议拆分为 `style.css` / `data.js` / `app.js` / `vendor/qrcode.js`。
+改文案/题目/品牌数据只动 `data.js`；改样式动 `style.css`；改交互逻辑动 `app.js`。
 
 ## 本地开发
 
