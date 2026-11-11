@@ -28,6 +28,29 @@ function nickHtml(nick, band){
   return esc(nick);
 }
 
+/* 酒瓶液位：瓶身内壁 y=20..92，液体高度按 pct 比例，rAF 里再填入 */
+function bottleSvg(){
+  return '<svg class="bottle" viewBox="0 0 44 96" aria-hidden="true">' +
+    '<defs><clipPath id="bclip"><rect x="5" y="20" width="34" height="72" rx="9"/></clipPath></defs>' +
+    '<rect class="liq" x="5" y="92" width="34" height="0" fill="#FF6B35" clip-path="url(#bclip)"/>' +
+    '<rect x="15" y="2" width="14" height="16" rx="2" fill="#FFFDF6" stroke="#241C14" stroke-width="2.5"/>' +
+    '<rect x="5" y="18" width="34" height="74" rx="9" fill="none" stroke="#241C14" stroke-width="2.5"/>' +
+    '<path d="M11 30 h22" stroke="rgba(36,28,20,.15)" stroke-width="2"/>' +
+  '</svg>';
+}
+
+/* 酒瓶数量刻度：7 档酒量点亮 band+1 只瓶 */
+function bottleRowSvg(band, h){
+  var lit = Math.min(band + 1, 7);
+  var out = '<svg viewBox="0 0 240 58" style="height:' + h + 'px" aria-hidden="true" class="brow">';
+  for (var i = 0; i < 7; i++){
+    out += '<g transform="translate(' + (i * 34 + 2) + ' 0)" stroke="#241C14" stroke-width="2.5" stroke-linejoin="round" fill="' + (i < lit ? "#FF6B35" : "none") + '">' +
+      '<path d="M12 4 v8 q-8 4 -8 12 v22 q0 7 7 7 h10 q7 0 7 -7 v-22 q0 -8 -8 -12 v-8 z"/>' +
+    '</g>';
+  }
+  return out + '</svg>';
+}
+
 function paintPageQr(){
   var url = resultUrl();
   var qimg = $("qimg");
@@ -76,9 +99,10 @@ function openShowStage(){
     stage.id = "showstage";
     stage.className = "showstage";
     stage.innerHTML =
-      '<p class="show-brand">你，几两？</p>' +
       '<p class="show-tag" id="showTag"></p>' +
       '<div class="show-nick" id="showNick"></div>' +
+      '<div class="show-stamp" id="showStamp"></div>' +
+      '<div class="show-bottles" id="showBottles"></div>' +
       '<p class="show-pct" id="showPct"></p>' +
       '<div class="show-bar">' +
         '<button type="button" class="btn" id="showSave">保存出示图</button>' +
@@ -100,6 +124,12 @@ function openShowStage(){
   tag.style.background = face.bg;
   tag.style.color = face.fg;
   fillShowNick($("showNick"), R.nick || "");
+  var stamp = $("showStamp");
+  var sw = (STAMP_WORDS[R.band] || "酒桌免检");
+  stamp.innerHTML = "<i>" + sw.slice(0, 2) + "<br>" + sw.slice(2) + "</i>";
+  stamp.style.display = "block";
+  var sbot = $("showBottles");
+  sbot.innerHTML = bottleRowSvg(R.band, 22);
   var short = pctClaim(R.pct, R.band, true);
   var pct = $("showPct");
   pct.textContent = short;
@@ -143,20 +173,28 @@ function renderResult(delay){
     '<div class="rhead">' +
       '<button class="reroll" id="reroll" type="button">↻ 换一个</button>' +
     '</div>' +
-    '<h2 class="rtitle" id="rtitle">' + nickHtml(R.nick, band) + '</h2>' +
-    '<p class="rsub">' + esc(R.title) + '</p>' +
+    '<div class="rhero">' +
+      '<div class="rherotxt">' +
+        '<h2 class="rtitle" id="rtitle">' + nickHtml(R.nick, band) + '</h2>' +
+        '<p class="rsub">' + esc(R.title) + '</p>' +
+      '</div>' +
+      '<div class="rfig">' + (STYLE_FIG[R.styleKey] || "") + '</div>' +
+    '</div>' +
     '<p class="pctline' + (band === 0 ? " soft" : "") + '" id="pctline">' + esc(claim) + '</p>' +
     vsHtml +
     '<blockquote class="quote">' + esc(R.roast) + '</blockquote>' +
     '<div class="stats">' +
       '<div class="stat">' +
-        '<div class="row"><b>酒量基数</b><span>' + R.pct + ' / 100</span></div>' +
-        '<div class="track"><i data-w="' + R.pct + '"></i></div>' +
-        '<div class="cap">' + esc(R.warn) + '</div>' +
+        bottleSvg() +
+        '<div class="statmain">' +
+          '<div class="row"><b>酒量基数</b><span>' + R.pct + ' / 100</span></div>' +
+          '<div class="cap">' + esc(R.warn) + '</div>' +
+        '</div>' +
       '</div>' +
-      '<div class="statrow">' +
-        '<div class="mini"><b>懂行 ' + R.know + ' / 2</b><span>' + esc(R.knowDesc) + '</span></div>' +
-        '<div class="mini"><b>' + esc(R.speedName) + '</b><span>' + esc(SPEED_DESC[R.speedKey]) + '</span></div>' +
+      '<div class="stickers">' +
+        '<span class="stk stk-red">懂行 ' + R.know + '/2</span>' +
+        '<span class="stk stk-teal">' + esc(R.speedName) + '</span>' +
+        (R.know === 2 ? '<span class="stk stk-gold">全场最懂</span>' : '') +
       '</div>' +
     '</div>' +
     '<div class="modes">' +
@@ -180,7 +218,12 @@ function renderResult(delay){
 
   requestAnimationFrame(function(){
     setTimeout(function(){
-      sResult.querySelectorAll(".track i").forEach(function(el){ el.style.width = el.dataset.w + "%"; });
+      var liq = sResult.querySelector(".liq");
+      if (liq){
+        var hh = 72 * Math.max(3, Math.min(99, R.pct)) / 100;
+        liq.setAttribute("y", (92 - hh).toFixed(1));
+        liq.setAttribute("height", hh.toFixed(1));
+      }
     }, delay || 160);
   });
 

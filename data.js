@@ -399,3 +399,82 @@
     ]
   };
 
+  /* 出示版印章文案：按酒量档，4 字对称好盖章 */
+  var STAMP_WORDS = ["新人报到","小酌认证","三两认证","半斤免检","八两免检","一斤免检","酒桌免检"];
+
+  /* 6 酒风角色立绘：手绘线稿，风格对齐第 3 题年龄小人 */
+  var STYLE_FIG = {
+    book:
+      '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<circle cx="37.5" cy="19" r="3.6" fill="#FFFFFF" stroke-width="2"/>' +
+        '<circle cx="46.5" cy="19" r="3.6" fill="#FFFFFF" stroke-width="2"/>' +
+        '<path d="M41.1 19 h1.8" stroke-width="2"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 26 q-13 4 -26 0 z" fill="#FFFFFF"/>' +
+        '<path d="M53 38 l10 10"/>' +
+        '<rect x="58" y="44" width="14" height="11" rx="1.5" fill="#FFCE3A" stroke-width="2.2"/>' +
+        '<path d="M38 60 l-3 19 M46 60 l3 19"/>' +
+      '</g></svg>',
+    hero:
+      '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<path d="M31.5 18 q10.5 -8 21 0" stroke-width="2.6"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 26 q-13 4 -26 0 z" fill="#FF6B35"/>' +
+        '<path d="M53 38 l11 4"/>' +
+        '<path d="M60 34 q8 -3 8 4 q0 8 -8 6 z" fill="#FFFDF6" stroke-width="2.2"/>' +
+        '<path d="M64 44 v10"/>' +
+        '<path d="M38 60 l-3 19 M46 60 l3 19"/>' +
+      '</g></svg>',
+    gourmet:
+      '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<circle cx="38" cy="21" r="1.6" fill="#241C14" stroke="none"/>' +
+        '<circle cx="46" cy="21" r="1.6" fill="#241C14" stroke="none"/>' +
+        '<path d="M39 25 q3 2.4 6 0" stroke-width="2"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 26 q-13 4 -26 0 z" fill="#FFFFFF"/>' +
+        '<path d="M31.5 38 q-10 4 -12 10"/>' +
+        '<path d="M17 46 q-4 9 4 11 q7 1.4 8 -6 q-2 -6 -12 -5 z" fill="#FFCE3A" stroke-width="2.2"/>' +
+        '<path d="M14 43 l8 4 M12 48 l8 2" stroke-width="2"/>' +
+        '<path d="M38 60 l-3 19 M46 60 l3 19"/>' +
+      '</g></svg>',
+    host:
+      '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<path d="M38 29.5 l4 4 l4 -4" stroke-width="2"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 26 q-13 4 -26 0 z" fill="#37C9AE"/>' +
+        '<path d="M53 38 l11 9"/>' +
+        '<path d="M61 42 h9 v9 q0 3 -3 3 h-3 q-3 0 -3 -3 z" fill="#FFFDF6" stroke-width="2.2"/>' +
+        '<path d="M70 44 q4 1 0 5" stroke-width="2"/>' +
+        '<path d="M31.5 38 l-10 9"/>' +
+        '<path d="M38 60 l-3 19 M46 60 l3 19"/>' +
+      '</g></svg>',
+    escape:
+      '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<rect x="31.5" y="16.5" width="9" height="6" rx="2.5" fill="#241C14" stroke="none"/>' +
+        '<rect x="43.5" y="16.5" width="9" height="6" rx="2.5" fill="#241C14" stroke="none"/>' +
+        '<path d="M40.5 18.5 h3" stroke-width="2"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 26 q-13 4 -26 0 z" fill="#FFFFFF"/>' +
+        '<path d="M31.5 40 q-11 2 -13 8"/>' +
+        '<path d="M15 47 q-3 7 3.4 8 q5.6 0.8 6.6 -4 q-1 -5 -10 -4 z" fill="#FFFDF6" stroke-width="2.2"/>' +
+        '<path d="M25 51 q3 -1.4 3.4 1" stroke-width="2"/>' +
+        '<path d="M38 60 l-3 19 M46 60 l3 19"/>' +
+      '</g></svg>',
+    jianghu:
+      '<svg viewBox="0 0 84 104" xmlns="http://www.w3.org/2000/svg">' +
+      '<g stroke="#241C14" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none">' +
+        '<circle cx="42" cy="20" r="10.5" fill="#FFE9CF"/>' +
+        '<path d="M31 16 q11 6 22 0 l1 6 q-12 4 -24 0 z" fill="#8A6B4F" stroke-width="2.2"/>' +
+        '<path d="M42 24 q3 3 0 6" stroke-width="2"/>' +
+        '<path d="M31 32 q11 -5 22 0 l2 26 q-13 4 -26 0 z" fill="#FFFDF6"/>' +
+        '<path d="M53 38 l11 5"/>' +
+        '<path d="M62 34 v13 M62 34 q7 -2 7 3 q0 5 -7 4" stroke-width="2.2"/>' +
+        '<path d="M38 60 l-3 19 M46 60 l3 19"/>' +
+      '</g></svg>'
+  };
+

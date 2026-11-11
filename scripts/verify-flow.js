@@ -67,6 +67,9 @@ async page => {
       share: document.getElementById("shareline").textContent,
       rtagGone: !document.querySelector(".rtag"),
       convGone: !document.querySelector(".convline"),
+      fig: !!document.querySelector(".rfig svg"),
+      liq: (function(){ var l = document.querySelector(".liq"); return l ? parseFloat(l.getAttribute("height")) : 0; })(),
+      stk: document.querySelectorAll(".stk").length,
       cand: nickList(R.name).length,
       band: R.band,
       n: R.pct,
@@ -89,8 +92,11 @@ async page => {
   else ok("分享句「" + result.nick + "，你几两？」");
   if (!result.rtagGone) bad("rtag 未清理");
   else if (!result.convGone) bad("折算行未清理");
+  else if (!result.fig) bad("酒风立绘缺失");
+  else if (!(result.liq > 10)) bad("酒瓶液位未填充: " + result.liq);
+  else if (result.stk < 2) bad("贴纸徽章不足: " + result.stk);
   else if (result.cand < 6) bad("绰号候选太少: " + result.cand);
-  else ok("头部精简✓ 绰号候选 " + result.cand + " 个");
+  else ok("立绘✓ 酒瓶液位 " + Math.round(result.liq) + "✓ 贴纸 " + result.stk + " 枚✓ 候选 " + result.cand + " 个");
   if (result.decoded !== result.nick) bad("二维码短码解出的绰号对不上");
   else ok("短码对得上「" + result.decoded + "」");
   await shot("result.png");
@@ -198,14 +204,20 @@ async page => {
       tag: (document.getElementById("showTag") || {}).textContent || "",
       tagBg: (document.getElementById("showTag") || {}).style ? document.getElementById("showTag").style.background : "",
       expect: pctClaim(R.pct, R.band, true),
-      size: span ? parseFloat(getComputedStyle(span).fontSize) : 0
+      size: span ? parseFloat(getComputedStyle(span).fontSize) : 0,
+      brandGone: !document.querySelector(".show-brand"),
+      stamp: (document.getElementById("showStamp") || {}).textContent || "",
+      bottles: !!document.querySelector("#showBottles .brow")
     };
   });
   if (!stage.on || stage.nick !== rolled.nick) bad("出示层绰号不对");
   else if (stage.size < 72) bad("出示字不够大 " + stage.size);
   else if (stage.pct !== stage.expect) bad("出示刻度「" + stage.pct + "」");
+  else if (!stage.brandGone) bad("出示层「你，几两？」未去掉");
+  else if (stage.stamp.indexOf("斤免检") < 0 && stage.stamp.indexOf("认证") < 0 && stage.stamp.indexOf("报到") < 0) bad("出示印章缺失: " + stage.stamp);
+  else if (!stage.bottles) bad("出示酒瓶刻度缺失");
   else if (stage.tag !== "豪侠" || stage.tagBg.indexOf("255, 107, 53") < 0 && stage.tagBg.indexOf("255,107,53") < 0) bad("出示酒风签不对: " + stage.tag + " " + stage.tagBg);
-  else ok("出示「" + stage.nick + "」 " + stage.size + "px 签「豪侠」");
+  else ok("出示「" + stage.nick + "」 " + stage.size + "px 章「" + stage.stamp.replace(/\s/g, "") + "」瓶✓");
   await shot("show-stage.png");
 
   await page.click("#showSave");

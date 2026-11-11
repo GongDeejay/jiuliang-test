@@ -158,24 +158,28 @@ function drawShowCard(){
   g.fillStyle = face.bg;                      /* 酒风色只留一条顶边提气 */
   g.fillRect(0, 0, W, 26);
 
-  g.textAlign = "center";
-  g.fillStyle = "#241C14";
-  g.globalAlpha = 0.9;
-  g.font = "800 30px " + FONT;
-  g.fillText("你，几两？", W / 2, 104);
-  g.globalAlpha = 1;
-
   var st = STYLE_NAME[R.styleKey] || "";
   g.font = "800 34px " + FONT;
+  g.textAlign = "center";
   var tw = g.measureText(st).width + 64;
-  sticker(g, W / 2 - tw / 2, 142, tw, 58, 29, face.bg);
+  sticker(g, W / 2 - tw / 2, 66, tw, 58, 29, face.bg);
   g.fillStyle = face.fg;
-  g.fillText(st, W / 2, 142 + 41);
+  g.fillText(st, W / 2, 66 + 41);
+
+  /* 角色线稿水印：左下角衬底 */
+  g.save();
+  g.globalAlpha = 0.14;
+  g.strokeStyle = "#241C14";
+  g.lineWidth = 7;
+  g.lineJoin = "round";
+  g.lineCap = "round";
+  drawStyleFigure(g, 150, 740, 2.6);
+  g.restore();
 
   g.fillStyle = "#241C14";
   var nk = R.nick || (R.name + LIANG[R.band]);
   var chars = nk.split("");
-  var top = 268, bottom = 1290, avail = bottom - top;
+  var top = 190, bottom = 1120, avail = bottom - top;
   var size = Math.floor(avail / chars.length * 0.78);
   if (size > 240) size = 240;
   if (size < 64) size = 64;
@@ -185,15 +189,108 @@ function drawShowCard(){
   var y = top + (avail - blockH) / 2 + size * 0.82;
   for (var i = 0; i < chars.length; i++) g.fillText(chars[i], W / 2, y + i * gap);
 
+  /* 搞笑认证印章：斜盖在绰号右侧 */
+  drawStamp(g, 588, 430, (STAMP_WORDS[R.band] || "酒桌免检"));
+
+  /* 酒瓶数量刻度：7 档点亮 band+1 只 */
+  drawBottleRow(g, W / 2, H - 64, 56, Math.min(R.band + 1, 7));
+
   var short = pctClaim(R.pct, R.band, true);
   if (short){
     g.globalAlpha = 0.92;
     g.font = "800 34px " + FONT;
-    g.fillText(short, W / 2, H - 88);
+    g.fillText(short, W / 2, H - 150);
     g.globalAlpha = 1;
   }
   g.textAlign = "left";
   return box.cv;
+}
+
+/* 手绘角色线稿（画布版）：通用小人 + 按酒风换道具 */
+function drawStyleFigure(g, cx, topY, s){
+  g.beginPath(); g.arc(cx, topY + 30 * s, 30 * s, 0, Math.PI * 2); g.stroke();
+  g.beginPath(); g.arc(cx - 12 * s, topY + 28 * s, 8 * s, 0, Math.PI * 2); g.stroke();
+  g.beginPath(); g.arc(cx + 12 * s, topY + 28 * s, 8 * s, 0, Math.PI * 2); g.stroke();
+  g.beginPath(); g.moveTo(cx - 4 * s, topY + 28 * s); g.lineTo(cx + 4 * s, topY + 28 * s); g.stroke();
+  g.beginPath();
+  g.moveTo(cx - 34 * s, topY + 80 * s);
+  g.quadraticCurveTo(cx, topY + 62 * s, cx + 34 * s, topY + 80 * s);
+  g.lineTo(cx + 44 * s, topY + 200 * s);
+  g.quadraticCurveTo(cx, topY + 212 * s, cx - 44 * s, topY + 200 * s);
+  g.closePath(); g.stroke();
+  g.beginPath();
+  g.moveTo(cx + 30 * s, topY + 108 * s); g.lineTo(cx + 82 * s, topY + 128 * s);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(cx - 20 * s, topY + 206 * s); g.lineTo(cx - 26 * s, topY + 246 * s);
+  g.moveTo(cx + 20 * s, topY + 206 * s); g.lineTo(cx + 26 * s, topY + 246 * s);
+  g.stroke();
+  var px = cx + 82 * s, py = topY + 128 * s;
+  var key = R.styleKey;
+  if (key === "book"){
+    g.strokeRect(px - 4 * s, py - 8 * s, 30 * s, 22 * s);
+  } else if (key === "hero"){
+    g.beginPath(); g.arc(px + 8 * s, py, 16 * s, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.moveTo(px + 4 * s, py - 16 * s); g.lineTo(px + 4 * s, py - 26 * s);
+    g.moveTo(px + 12 * s, py - 16 * s); g.lineTo(px + 12 * s, py - 26 * s); g.stroke();
+  } else if (key === "gourmet"){
+    g.beginPath(); g.arc(px + 4 * s, py + 6 * s, 16 * s, 0, Math.PI); g.stroke();
+    g.beginPath(); g.moveTo(px - 12 * s, py + 6 * s); g.lineTo(px + 20 * s, py + 6 * s); g.stroke();
+  } else if (key === "host"){
+    g.strokeRect(px - 4 * s, py - 10 * s, 20 * s, 24 * s);
+  } else if (key === "escape"){
+    g.beginPath(); g.arc(px + 4 * s, py + 2 * s, 12 * s, 0, Math.PI * 2); g.stroke();
+  } else {
+    g.strokeRect(px - 2 * s, py - 20 * s, 18 * s, 34 * s);
+  }
+}
+
+/* 斜盖认证章：双圈 + 两行字 */
+function drawStamp(g, cx, cy, word){
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(-12 * Math.PI / 180);
+  g.globalAlpha = 0.9;
+  g.strokeStyle = "#D85A30";
+  g.fillStyle = "#D85A30";
+  g.lineWidth = 9;
+  g.beginPath(); g.arc(0, 0, 102, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = 4;
+  g.beginPath(); g.arc(0, 0, 86, 0, Math.PI * 2); g.stroke();
+  g.textAlign = "center";
+  g.font = "800 46px " + FONT;
+  g.fillText(word.slice(0, 2), 0, -10);
+  g.fillText(word.slice(2), 0, 42);
+  g.restore();
+}
+
+/* 一排小酒瓶：lit 只实心，其余描边 */
+function drawBottleRow(g, cx, bottomY, bh, lit){
+  var bw = bh * 0.55, gapX = bh * 0.82;
+  var startX = cx - (7 * gapX) / 2 + gapX / 2 - bw / 2;
+  for (var i = 0; i < 7; i++){
+    var x = startX + i * gapX, y = bottomY - bh;
+    g.save();
+    g.strokeStyle = "#241C14";
+    g.lineWidth = 5;
+    g.lineJoin = "round";
+    if (i < lit){ g.fillStyle = "#FF6B35"; }
+    g.beginPath();
+    g.moveTo(x + bw * 0.35, y);
+    g.lineTo(x + bw * 0.35, y + bh * 0.2);
+    g.quadraticCurveTo(x, y + bh * 0.32, x, y + bh * 0.45);
+    g.lineTo(x, y + bh * 0.88);
+    g.quadraticCurveTo(x, y + bh, x + bw * 0.12, y + bh);
+    g.lineTo(x + bw * 0.88, y + bh);
+    g.quadraticCurveTo(x + bw, y + bh, x + bw, y + bh * 0.88);
+    g.lineTo(x + bw, y + bh * 0.45);
+    g.quadraticCurveTo(x + bw, y + bh * 0.32, x + bw * 0.65, y + bh * 0.2);
+    g.lineTo(x + bw * 0.65, y);
+    g.closePath();
+    if (i < lit) g.fill();
+    g.stroke();
+    g.restore();
+  }
 }
 
 /* 朋友圈版：酒风色块、一句可讲的、金句、刻度，二维码固定右下。 */

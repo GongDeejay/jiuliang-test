@@ -2,6 +2,7 @@
 
 ## Sub-features
 - 两套图都走 `drawCard()`：`cardMode === "show"` 是出示版，否则是朋友圈版（酒风色块、一句钩子、金句、刻度、右下角固定二维码）。尺寸在页面全局 `CARD_SPEC`
+- 出示版 v3（2026-11-11，去枯燥三件套）：**「你，几两？」已删**，酒风签上移到 y=66；竖排大字 top=190/bottom=1120；右侧 `drawStamp()` 斜盖双圈印章（`STAMP_WORDS[band]` 7 档文案）；左下 `drawStyleFigure()` 线稿水印（alpha 0.14，按 styleKey 换道具）；底部 `drawBottleRow()` 7 只酒瓶点亮 band+1 只；刻度句上移到 H-150 给酒瓶让位。`#showstage` 全屏层同步：印章 `.show-stamp` + 酒瓶 `.show-bottles`（DOM 版 `bottleRowSvg()`）。验证双像素不变：`(16,16)`=酒风色、`(16,200)`=奶黄底
 - 出示版设计 v2（2026-11-11，用户嫌满底酒风色难看）：奶黄底 `#FFF7E3` + 墨字，酒风色只留 **26px 顶边条** + 一枚 `.show-tag` 圆签；`#showstage` 全屏层同底同色。验证取双像素：`(16,16)` 设备像素 = 酒风色、`(16,200)` = 奶黄底（dpr=2）
 - `#pass`「出示同桌」：打开 `#showstage`，手机可以直接递过去。最低档不写百分比。`#showSave` 再走保存管线
 - `#moments`「发朋友圈」和 `#save`（在 `.row3`）：保存当前版式。默认是朋友圈版
