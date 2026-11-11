@@ -1,0 +1,15 @@
+# 测试产物
+*.png
+s1.yaml
+
+# 工具目录
+.playwright/
+.playwright-cli/
+.workbuddy/
+*.genie
+
+# 系统
+.DS_Store
+
+# 依赖
+node_modules/
