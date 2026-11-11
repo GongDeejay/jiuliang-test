@@ -36,13 +36,14 @@ console.log('✓ JS 语法 OK (' + scripts.length + ' 个 script 块)');
 "$PC" open "$URL" >/dev/null
 "$PC" resize 375 667 >/dev/null
 
-"$PC" run-code "async page => {
+RESULT=$($PC run-code "async page => {
   await page.waitForTimeout(1200);
   const log = [];
+  const vh = page.viewportSize().height;
 
   // 启动页
   const splashH = await page.evaluate(() => document.documentElement.scrollHeight);
-  if (splashH > innerHeight) log.push('❌ 启动页溢出: ' + splashH); else log.push('✓ 启动页 ' + splashH + 'px');
+  if (splashH > vh) log.push('❌ 启动页溢出: ' + splashH); else log.push('✓ 启动页 ' + splashH + 'px');
 
   await page.click('#start');
   await page.waitForTimeout(600);
@@ -57,7 +58,7 @@ console.log('✓ JS 语法 OK (' + scripts.length + ' 个 script 块)');
       const sels = {pmap:'.pmap', vessels:'.vessels', ages:'.ages', table:'.tbl-wrap', knock:'.scene', digits:'.digits', chat:'.replies', battery:'.gchat'};
       return !!document.querySelector(sels[k]);
     }, kinds[i]);
-    if (h > innerHeight) log.push('❌ 第' + (i+1) + '题溢出: ' + h);
+    if (h > vh) log.push('❌ 第' + (i+1) + '题溢出: ' + h);
     else if (sw > 375) log.push('❌ 第' + (i+1) + '题横向溢出: ' + sw);
     else if (!kindOk) log.push('❌ 第' + (i+1) + '题题型不符');
     else log.push('✓ 第' + (i+1) + '题 ' + kinds[i] + ' ' + h + 'px');
@@ -90,16 +91,28 @@ console.log('✓ JS 语法 OK (' + scripts.length + ' 个 script 块)');
     qr: !!document.getElementById('qimg') && document.getElementById('qimg').src.length > 10
   }));
   if (!r.ovGone || !r.nick) log.push('❌ 结算页异常');
-  else if (r.h > innerHeight) log.push('❌ 结算页溢出: ' + r.h);
+  else if (r.h > vh) log.push('❌ 结算页溢出: ' + r.h);
   else if (r.sw > 375) log.push('❌ 结算页横向溢出: ' + r.sw);
   else log.push('✓ 结算页「' + r.nick + '」 ' + r.h + 'px' + (r.qr ? ' 二维码✓' : ' ⚠️无二维码'));
 
   return log.join('\n');
-}"
+}")
+# 提取 JSON 结果行并解析显示
+MSG=$(echo "$RESULT" | grep '^"' | head -1)
+"$PC" close >/dev/null 2>&1 || true
 
 echo ""
 echo "================================"
-echo "验证完成。全部 ✓ 即可通过上线。"
+if [ -z "$MSG" ]; then
+  echo "❌ 未取得验证结果（浏览器或服务器异常）"
+  exit 1
+fi
+printf '%s' "$MSG" | python3 -c "import sys, json; print(json.loads(sys.stdin.read()))"
+if echo "$MSG" | grep -q "❌"; then
+  echo "--------------------------------"
+  echo "❌ 验证未通过，禁止上线"
+  exit 1
+fi
+echo "--------------------------------"
+echo "✓ 全部通过，可上线"
 echo "================================"
-
-"$PC" close >/dev/null 2>&1 || true
